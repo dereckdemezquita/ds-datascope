@@ -1,0 +1,811 @@
+---
+title: "Exploratory analysis"
+author: "Dereck de Mézquita"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_file=file.path(dirname(inputFile), "./reports/", "/exploratory-analysis/exploratory-analysis.html")) })
+output:
+  html_document: 
+    fig_caption: yes
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+    # code_folding: hide
+params:
+  rmd: exploratory-analysis.Rmd
+editor_options: 
+  chunk_output_type: inline
+---
+
+<a download="exploratory-analysis.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, out.width = "100%", fig.align = "center")
+```
+
+# Libraries
+
+```{r libraries, warning=FALSE, message=FALSE}
+library("tidyverse")
+options(dplyr.summarise.inform = FALSE)
+# theme_set(theme(legend.position = "none"))
+library("plotly")
+library("countrycode")
+
+# library("trelliscopejs")
+```
+
+```{r modules, warning=FALSE, message=FALSE}
+source("./modules/helper-functions.R")
+```
+
+# Load data
+
+```{r load-data}
+data <- readRDS("./outputs/clean_data.Rds")
+meta <- read.csv("./data/ddf--gapminder--fasttrack/meta-data/ddf--concepts.csv")
+
+data$pop <- read.csv("./data/population_total.csv")
+```
+
+# Dataset completeness
+
+```{r function-invert-na-df}
+is.not.na <- function(x) {
+	return(!is.na(x))
+}
+```
+
+The datasets collected and cleaned are of the following dimensions (rows, columns):
+
+1. `data$pop`: `r dim(data$pop)`
+1. `data$countries`: `r dim(data$countries)`
+1. `data$global`: `r dim(data$global)`
+1. `data$world_4region`: `r dim(data$world_4region)`
+
+## Tables preview {.tabset}
+
+```{r preview-data-pop, results="asis"}
+cat("### ","Dataset preview: pop", "\n")
+datatable(rbind(head(data$pop, 100), tail(data$pop, 100)))
+cat("\n\n")
+```
+
+```{r preview-data-countries, results="asis"}
+cat("### ","Dataset preview: countries", "\n")
+datatable(rbind(head(data$countries, 100), tail(data$countries, 100)))
+cat("\n\n")
+```
+
+```{r preview-data-global, results="asis"}
+cat("### ","Dataset preview: global", "\n")
+datatable(rbind(head(data$global, 100), tail(data$global, 100)))
+cat("\n\n")
+```
+
+```{r preview-data-world_4region, results="asis"}
+cat("### ","Dataset preview: world_4region", "\n")
+datatable(rbind(head(data$world_4region, 100), tail(data$world_4region, 100)))
+cat("\n\n")
+```
+
+## Plots {.tabset}
+
+```{r barplot-completion-pop, fig.height=15, results="asis"}
+cat("### ","Dataset completion: pop", "\n")
+{data$pop %>%
+		select(-country) %>%
+		is.not.na() %>%
+		as.data.frame() %>%
+		colSums() / 195 * 100} %>%
+	as.list() %>%
+	data.frame() %>%
+	t() %>%
+	as.data.frame() %>%
+	rownames_to_column() %>%
+	ggplot(aes(reorder(rowname, V1), V1, fill = V1)) +
+	geom_bar(stat = "identity") +
+	scale_fill_gradient(low = "blue", high = "red", limits = c(0, 100), breaks = c(0, 25, 50, 75, 100))  +
+	geom_text(aes(label = glue::glue("{round(V1)}%")), hjust = -0.35, colour = "black") + # , angle = 90
+	scale_y_continuous(expand = expansion(mult = c(0, .2)), n.breaks = 15) +
+	scale_x_discrete(expand = expansion(mult = c(0.015, 0.015))) +
+	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+	labs(title = "Completeness of variables", subtitle = "Percent of non NA values per variable", x = "Percentage completeness", y = "Variable") +
+	coord_flip()
+cat("\n\n")
+```
+
+```{r barplot-completion-countries, fig.height=15, results="asis"}
+cat("### ","Dataset completion: countries", "\n")
+{data$countries %>%
+		select(-country, -time) %>%
+		is.not.na() %>%
+		as.data.frame() %>%
+		colSums() / 58369 * 100} %>%
+	as.list() %>%
+	data.frame() %>%
+	t() %>%
+	as.data.frame() %>%
+	rownames_to_column() %>%
+	ggplot(aes(reorder(rowname, V1), V1, fill = V1)) +
+	geom_bar(stat = "identity") +
+	scale_fill_gradient(low = "blue", high = "red", limits = c(0, 100), breaks = c(0, 25, 50, 75, 100))  +
+	geom_text(aes(label = glue::glue("{round(V1)}%")), hjust = -0.35, colour = "black") + # , angle = 90
+	scale_y_continuous(expand = expansion(mult = c(0, .2)), n.breaks = 15) +
+	scale_x_discrete(expand = expansion(mult = c(0.015, 0.015))) +
+	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+	labs(title = "Completeness of variables", subtitle = "Percent of non NA values per variable", x = "Percentage completeness", y = "Variable") +
+	coord_flip()
+cat("\n\n")
+```
+
+```{r barplot-completion-global, results="asis"}
+cat("### ","Dataset completion: global", "\n")
+{data$global %>%
+		select(-global, -time) %>%
+		is.not.na() %>% 
+		as.data.frame() %>%
+		colSums() / 124 * 100} %>%
+	as.list() %>%
+	data.frame() %>%
+	t() %>%
+	as.data.frame() %>%
+	rownames_to_column() %>%
+	ggplot(aes(reorder(rowname, V1), V1, fill = V1)) +
+	geom_bar(stat = "identity") +
+	scale_fill_gradient(low = "blue", high = "red", limits = c(0, 100), breaks = c(0, 25, 50, 75, 100))  +
+	geom_text(aes(label = glue::glue("{round(V1)}%")), hjust = -0.35, colour = "black") + # , angle = 90
+	scale_y_continuous(expand = expansion(mult = c(0, .2)), n.breaks = 15) +
+	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+	labs(title = "Completeness of variables", subtitle = "Percent of non NA values per variable", x = "Percentage completeness", y = "Variable") +
+	coord_flip()
+cat("\n\n")
+```
+
+```{r barplot-completion-world_4region, results="asis"}
+cat("### ","Dataset completion: world_4region", "\n")
+{data$world_4region %>%
+		select(-world_4region, -time) %>%
+		is.not.na() %>%
+		as.data.frame() %>%
+		colSums() / 301 * 100} %>%
+	as.list() %>%
+	data.frame() %>%
+	t() %>%
+	as.data.frame() %>%
+	rownames_to_column() %>%
+	ggplot(aes(reorder(rowname, V1), V1, fill = V1)) +
+	geom_bar(stat = "identity") +
+	scale_fill_gradient(low = "blue", high = "red", limits = c(0, 100), breaks = c(0, 25, 50, 75, 100))  +
+	geom_text(aes(label = glue::glue("{round(V1)}%")), hjust = -0.35, colour = "black") + # , angle = 90
+	scale_y_continuous(expand = expansion(mult = c(0, .2)), n.breaks = 15) +
+	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+	labs(title = "Completeness of variables", subtitle = "Percent of non NA values per variable", x = "Percentage completeness", y = "Variable") +
+	coord_flip()
+cat("\n\n")
+```
+
+# Total world population
+
+## Renaming variables
+
+```{r vector-factors-region}
+region23_factors <- c("Northern America", "South America", "Central America", "Caribbean", "Northern Europe", "Western Europe", "Southern Europe", "Eastern Europe", "Australia and New Zealand", "Western Asia", "Central Asia", "Eastern Asia", "Southern Asia", "South-Eastern Asia", "Melanesia", "Micronesia", "Polynesia", "Northern Africa", "Western Africa", "Eastern Africa", "Middle Africa", "Southern Africa")
+
+region7_factors <- c("North America", "Europe & Central Asia", "Latin America & Caribbean", "East Asia & Pacific", "South Asia", "Middle East & North Africa", "Sub-Saharan Africa")
+```
+
+```{r reshape-pop-data}
+data$pop <- data$pop %>%
+	column_to_rownames("country") %>%
+	t() %>% as.data.frame() %>%
+	rownames_to_column("year") %>%
+	mutate(year = gsub("X", "", year)) %>%
+	reshape2::melt() %>%
+	dplyr::rename(country = variable, population = value) %>%
+	mutate(year = as.numeric(year),
+			 code = countrycode::countrycode(country, "country.name", "iso3c"),
+			 region7 = countrycode::countrycode(country, "country.name", "region"),
+			 region23 = countrycode::countrycode(country, "country.name", "region23")) %>%
+	mutate(region7 = factor(region7, levels = region7_factors), region23 = factor(region23, levels = region23_factors))
+```
+
+```{r pop-line-world, fig.width=20, fig.height=20}
+data$pop %>%
+	ggplot(aes(year, population, group = country, colour = code)) +
+	geom_line() +
+	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
+	directlabels::geom_dl(aes(label = code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
+	directlabels::geom_dl(aes(label = code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "World population per region", subtitle = "Red dotted line: projected", caption = "*Note changing scales", x = "Year", y = "Population") +
+	facet_wrap(~ region7, scales = "fixed") +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.1, 0.1))) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) {
+		# paste0(substr(format(x, scientific = FALSE), 1, 2), " B")
+		scales::label_number_si(accuracy = 0.1)(x)
+	})
+
+data$pop %>%
+	ggplot(aes(year, population, group = country, colour = code)) +
+	geom_line() +
+	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
+	directlabels::geom_dl(aes(label = code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
+	directlabels::geom_dl(aes(label = code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "World population per region", subtitle = "Red dotted line: projected", x = "Year", y = "Population log2") +
+	# lemon::facet_rep_wrap(~ region7, scales = "fixed", repeat.tick.labels = TRUE) +
+	facet_wrap(~ region7, scales = "fixed") +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.1, 0.1))) +
+	scale_y_continuous(trans = "log2", n.breaks = 10, labels = function(x) {
+		# paste0(substr(format(x, scientific = FALSE), 1, 2), " B")
+		scales::label_number_si(accuracy = 0.1)(x)
+	})
+```
+
+```{r pop-line-world-int, fig.width=20, fig.height=20, warning=FALSE}
+{data$pop %>%
+	ggplot(aes(year, population, group = country, colour = code)) +
+	geom_line() +
+	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
+	scale_y_continuous(trans = "log2", n.breaks = 10, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(x)
+	}) +
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + # legend.position = "none",
+	labs(title = "World population per region", subtitle = "Red dotted line: projected", x = "Year", y = "Population log2") +
+	lemon::facet_rep_wrap(~ region7, scales = "fixed", repeat.tick.labels = TRUE)} %>%
+	plotly::ggplotly()
+```
+
+
+```{r pop-line-per-regions-sums}
+data$pop %>%
+	group_by(year, region7) %>%
+	summarise(region_sum = sum(population)) %>%
+	ggplot(aes(year, region_sum, colour = region7)) +
+	geom_line() +
+	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	directlabels::geom_dl(aes(label = region7), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
+	directlabels::geom_dl(aes(label = region7), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.275, 0.275))) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) {
+		# paste0(substr(format(x, scientific = FALSE), 1, 2), " B")
+		scales::label_number_si(accuracy = 0.1)(x)
+	}) +
+	labs(title = "World population per region", subtitle = "Red dotted line: projected", x = "Year", y = "Population")
+
+data$pop %>%
+	group_by(year, region23) %>%
+	summarise(region_sum = sum(population)) %>%
+	ggplot(aes(year, region_sum, colour = region23)) +
+	geom_line() +
+	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	directlabels::geom_dl(aes(label = region23), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
+	directlabels::geom_dl(aes(label = region23), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.275, 0.275))) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) {
+		# paste0(substr(format(x, scientific = FALSE), 1, 2), " B")
+		scales::label_number_si(accuracy = 0.1)(x)
+	}) +
+	labs(title = "World population per region", subtitle = "Red dotted line: projected", x = "Year", y = "Population")
+```
+
+```{r pop-line-per-total-sums}
+p <- data$pop %>%
+	group_by(year) %>%
+	summarise(population = sum(population)) %>%
+	mutate(colour = ifelse(year <= 2020, "#444444", "red"),
+			 type = ifelse(year <= 2020, "solid", "dashed")) %>%
+	ggplot(aes(year, population, colour = colour, linetype = type)) +
+	geom_line() +
+	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
+	scale_color_identity() +
+	scale_linetype_identity() +
+	scale_y_continuous(n.breaks = 10, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(x)
+	}) +
+	labs(title = "World population", subtitle = "Red dotted line: projected", x = "Year", y = "Population (Billions)") +
+	theme(legend.position = "none")
+
+p
+
+ggplotly(p)
+```
+
+# Exploratory analysis
+
+Here is the meta data associated to these variables.
+
+```{r table-meta-preview}
+largeTable(meta, targs = c(3, 7, 9, 12))
+```
+
+# world_4region
+
+## Rename variables
+
+```{r reshape-world_4region}
+data$world_4region <- data$world_4region %>%
+	rename(Region = world_4region, Year = time) %>%
+	mutate(Region = stringr::str_to_title(Region))
+```
+
+## wn_bothhouses_c
+
+Percentage of parliamentary seats held by women.
+
+wn_bothhouses_c	measure	http://gapm.io/dwparl	v2	December 15 2020	Pecentage of women in parliaments	Pecentage of women in parliaments	Pecentage of women in parliaments	Percentage of national parliamentary seats held by women. Lower and upper houses combined	percent	governance
+
+```{r w4-women-held-line}
+data$world_4region %>%
+	select(Region, Year, wn_bothhouses_c) %>%
+	rename(Value = wn_bothhouses_c) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.15, 0.15))) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Percentage of parliamentary seats held by women", x = "Year", y = "Women held parliamentary seats %")
+
+{data$world_4region %>%
+	select(Region, Year, wn_bothhouses_c) %>%
+	rename(Value = wn_bothhouses_c) %>%
+	mutate(Region = stringr::str_to_title(Region)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	scale_x_continuous(n.breaks = 20) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Percentage of parliamentary seats held by women", x = "Year", y = "Women held parliamentary seats %") +
+	scale_colour_discrete(name = "World region")} %>%
+	ggplotly()
+```
+
+## refugee_in_perc_wb
+
+Share refugees	Refugees as share of population in the country of residence.
+
+refugee_in_perc_wb	measure	http://gapm.io/drefugee_wb	v2	July 27 2020	Share refugees	Refugees as share of population in the country of residence.	Share refugees	This is the share of refugees as a percentage of total population in the country of residence.	percent	refugees
+
+```{r w4-refugee-line}
+data$world_4region %>%
+	select(Region, Year, refugee_in_perc_wb) %>%
+	rename(Value = refugee_in_perc_wb) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.15, 0.15))) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Percentage of refugees to total population of origin", x = "Year", y = "Refugees to total population of origin %") +
+	scale_colour_discrete(name = "World region") # Customise legend title and variable
+
+{data$world_4region %>%
+	select(Region, Year, refugee_in_perc_wb) %>%
+	rename(Value = refugee_in_perc_wb) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	scale_x_continuous(n.breaks = 20) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Percentage of refugees to total population of origin", x = "Year", y = "Refugees to total population of origin %") +
+	scale_colour_discrete(name = "World region")} %>%
+	ggplotly()
+```
+
+# ihme_hiv_death
+
+This is the proportion of deaths caused by HIV/AIDS
+
+ihme_hiv_death	measure	http://gapm.io/dcauses_death_ihme	v1	June 15 2020	HIV/AIDS deaths (%)	HIV/AIDS deaths (%)	HIV/AIDS deaths (%)	This is the proportion of deaths caused by HIV/AIDS (IHME)	percent	health
+
+```{r w4-hiv-deaths-line}
+data$world_4region %>%
+	select(Region, Year, ihme_hiv_death) %>%
+	rename(Value = ihme_hiv_death) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.15, 0.15))) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Proportion of HIV/AIDS deaths", x = "Year", y = "Proportion of HIV/AIDS deaths %") +
+	scale_colour_discrete(name = "World region")
+
+{data$world_4region %>%
+	select(Region, Year, ihme_hiv_death) %>%
+	rename(Value = ihme_hiv_death) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	scale_x_continuous(n.breaks = 20) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Proportion of HIV/AIDS deaths", x = "Year", y = "Proportion of HIV/AIDS deaths %") +
+	scale_colour_discrete(name = "World region")} %>%
+	ggplotly()
+```
+
+
+```{r w4-hiv-deaths-log-line}
+data$world_4region %>%
+	select(Region, Year, ihme_hiv_death) %>%
+	rename(Value = ihme_hiv_death) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.15, 0.15))) +
+	scale_y_continuous(trans = "log2", n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Proportion of HIV/AIDS deaths", x = "Year", y = "Proportion of HIV/AIDS deaths %") +
+	scale_colour_discrete(name = "World region")
+
+{data$world_4region %>%
+	select(Region, Year, ihme_hiv_death) %>%
+	rename(Value = ihme_hiv_death) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	scale_x_continuous(n.breaks = 20) +
+	scale_y_continuous(trans = "log2", n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Proportion of HIV/AIDS deaths", x = "Year", y = "Proportion of HIV/AIDS deaths %") +
+	scale_colour_discrete(name = "World region")} %>%
+	ggplotly()
+```
+
+## ihme_conflict_death
+
+This is the proportion of deaths caused by conflict and terrorism
+
+ihme_conflict_death	measure	http://gapm.io/dcauses_death_ihme	v1	June 15 2020	Conflict and terrorism deaths (%)	Conflict and terrorism deaths (%)	Conflict and terrorism deaths (%)	This is the proportion of deaths caused by conflict and terrorism (IHME)	percent	health
+
+
+```{r w4-conflict-death-line}
+data$world_4region %>%
+	select(Region, Year, ihme_conflict_death) %>%
+	rename(Value = ihme_conflict_death) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.15, 0.15))) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Proportion of conflict/terrorism deaths", x = "Year", y = "Proportion of conflict/terrorism deaths %") +
+	scale_colour_discrete(name = "World region")
+
+{data$world_4region %>%
+	select(Region, Year, ihme_conflict_death) %>%
+	rename(Value = ihme_conflict_death) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	scale_x_continuous(n.breaks = 20) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Proportion of conflict/terrorism deaths", x = "Year", y = "Proportion of conflict/terrorism deaths %") +
+	scale_colour_discrete(name = "World region")} %>%
+	ggplotly()
+```
+
+
+```{r w4-conflict-death-log-line}
+data$world_4region %>%
+	select(Region, Year, ihme_conflict_death) %>%
+	rename(Value = ihme_conflict_death) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.15, 0.15))) +
+	scale_y_continuous(trans = "log2", n.breaks = 15, labels = function(x) paste0(round(x, digits = 5), "%")) + # Add percent sign
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Proportion of conflict/terrorism deaths", x = "Year", y = "Proportion of conflict/terrorism deaths % (log2)") +
+	scale_colour_discrete(name = "World region")
+
+{data$world_4region %>%
+	select(Region, Year, ihme_conflict_death) %>%
+	rename(Value = ihme_conflict_death) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	scale_x_continuous(n.breaks = 20) +
+	scale_y_continuous(trans = "log2", n.breaks = 15, labels = function(x) paste0(round(x, digits = 5), "%")) + # Add percent sign
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Proportion of conflict/terrorism deaths", x = "Year", y = "Proportion of conflict/terrorism deaths % (log2)") +
+	scale_colour_discrete(name = "World region")} %>%
+	ggplotly()
+```
+
+## ihme_cardio_death
+
+This is the proportion of deaths caused by Cardiovascular diseases
+
+ihme_cardio_death	measure	http://gapm.io/dcauses_death_ihme	v1	June 15 2020	Cardiovascular diseases deaths (%)	Cardiovascular diseases deaths (%)	Cardiovascular diseases deaths (%)	This is the proportion of deaths caused by Cardiovascular diseases (IHME)	percent	health
+
+```{r w4-cardio-deaths-line}
+data$world_4region %>%
+	select(Region, Year, ihme_cardio_death) %>%
+	rename(Value = ihme_cardio_death) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = Region), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.15, 0.15))) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Proportion of cardiovascular disease deaths", x = "Year", y = "Proportion of cardiovascular disease deaths %") +
+	scale_colour_discrete(name = "World region")
+
+{data$world_4region %>%
+	select(Region, Year, ihme_cardio_death) %>%
+	rename(Value = ihme_cardio_death) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Region)) +
+	geom_line() +
+	scale_x_continuous(n.breaks = 20) +
+	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Proportion of cardiovascular disease deaths", x = "Year", y = "Proportion of cardiovascular disease deaths %") +
+	scale_colour_discrete(name = "World region")} %>%
+	ggplotly()
+```
+
+# global
+
+## Rename variables
+
+```{r reshape-global}
+data$global <- data$global %>%
+	rename(Region = global, Year = time)
+```
+
+## ndisasd_tot
+
+Natural disaster deaths	Natural disaster deaths per year
+
+ndisasd_tot	measure	http://gapm.io/dnatdisasters	v3	March 24 2020	Natural disaster deaths	Natural disaster deaths per year	Natural disaster deaths	This is the number of deaths from all natural disasters. The data includes all categories classified as "natural disasters" (distinguished from technological disasters, such as transport, industrial accidents,etc.. and complex disasters which include some major famine situation for which the drought were not the main causal factor). This includes total deaths from animal accident, droughts, earthquake, epidemic, extreme temperature, Flood, Fog, Impact, Insect infestation, Landslide, Mass movement (dry), Storm, Volcanic activity and Wildfire.	deaths	environment
+
+```{r global-ndisaster-tot-bar}
+data$global %>%
+	select(Year, Region, ndisasd_tot, ndisasd_rate) %>%
+	rename(Value = ndisasd_tot) %>%
+	filter(!is.na(Value)) %>%
+	filter(Year <= 2020) %>%
+	ggplot(aes(Year, Value)) + # , fill = ndisasd_rate
+	geom_bar(stat = "identity") +
+	scale_x_continuous(n.breaks = 20) +
+	scale_y_continuous(n.breaks = 15) +
+	labs(title = "Total deaths related to natural disasters", x = "Year", y = "Total deaths related to natural disaster") +
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+## ndisasd_rate
+
+This is the number of deaths from all natural disasters per million people	deaths	environment
+
+ndisasd_rate	measure	http://gapm.io/dnatdisasters	v3	March 24 2020	Natural disasters death rate	Natural disasters death rate per million people per year	Natural disasters death rate	This is the number of deaths from all natural disasters per million people	deaths	environment
+
+```{r global-ndisaster-rate-bar}
+data$global %>%
+	select(Year, Region, ndisasd_tot, ndisasd_rate) %>%
+	rename(Value = ndisasd_rate) %>%
+	filter(!is.na(Value)) %>%
+	filter(Year <= 2020) %>%
+	ggplot(aes(Year, (Value / 1000000) * 100)) + # , fill = ndisasd_rate
+	geom_bar(stat = "identity") +
+	scale_x_continuous(n.breaks = 25) +
+	scale_y_continuous(n.breaks = 15, labels = function(x) paste0(x, "%")) +
+	labs(title = "Proportion of natural disaster associated deaths to world population", x = "Year", y = "Proportion of natural disaster deaths to world population") +
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+## num_countries_fhos
+
+How many countries have had a female leader
+
+num_countries_fhos	measure	http://gapm.io/dfemale_hos_over_time	v1	May 3 2020	Female Head of State	Number of countries that have had Female Head of State	Female Head of State	This answer the question: How many countries have had a female leader? This list includes women who have been elected or appointed head of state or government of their respective countries since the interwar period. The list does not include women chosen by a hereditary monarch nor females who have been Prime Minister but not head of state or government (like Peru where only President is head of Government).	countries	governance
+
+
+```{r global-female-head-line}
+data$global %>%
+	select(Year, num_countries_fhos) %>%
+	rename(Value = num_countries_fhos) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value)) +
+	geom_line() +
+	scale_x_continuous(n.breaks = 25) +
+	scale_y_continuous(n.breaks = 15) +
+	labs(title = "Number of countries who have had a female head of state", x = "Year", y = "Countries that had a female head of state") +
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+## journakilled
+
+journakilled	measure	http://gapm.io/djournalists_silenced	v1	January 22 2019	Journalists killed	Number of journalists killed
+
+```{r global-journalist-killed-line}
+data$global %>%
+	select(Year, journakilled) %>%
+	rename(Value = journakilled) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value)) +
+	geom_line() +
+	scale_x_continuous(n.breaks = 25) +
+	scale_y_continuous(n.breaks = 20) +
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Total number of journalist murdered internationally", x = "Year", y = "Number of murdered journalist")
+```
+
+# countries
+
+## Rename variables
+
+```{r reshape-countries}
+data$countries <- data$countries %>%
+	rename(Code = country, Year = time) %>%
+	mutate(Code = toupper(Code)) %>%
+	mutate(Country = countrycode::countrycode(Code, "iso3c", "country.name"),
+			 Region = countrycode::countrycode(Code, "iso3c", "region23"),
+			 Continent = countrycode::countrycode(Code, "iso3c", "region")) %>%
+	mutate(Region = factor(Region, levels = region23_factors)) %>%
+	filter(!is.na(Region))
+```
+
+## Add population data
+
+```{r}
+data$countries <- data$pop %>%
+	rename(Code = code, Year = year, Country = country) %>%
+	full_join(data$countries, by = c("Code", "Year", "Country"))
+```
+
+## gini
+
+Gini shows income inequality in a society. A higher number means more inequality.
+
+gini	measure	http://gapm.io/ddgini	v3	December 5 2018	Gini	Gini coefficient		Gini shows income inequality in a society. A higher number means more inequality.
+
+```{r countries-inequality-line}
+data$countries %>%
+	select(Continent, Year, gini) %>%
+	rename(Value = gini) %>%
+	filter(!is.na(Value) & Year <= 2020) %>%
+	# filter(Year <= 2020) %>%
+	group_by(Year, Continent) %>%
+	summarise(Value = mean(Value), Continent) %>%
+	ggplot(aes(Year, Value, group = Continent, colour = Continent)) +
+	geom_line() +
+	# geom_vline(xintercept = 2020, linetype = "dashed", colour = "red") +
+	directlabels::geom_dl(aes(label = Continent), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = Continent), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Average gini per region (inequality index)", subtitle = "A higher number means more inequality", x = "Year", y = "Gini index value") +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.375, 0.375))) +
+	scale_y_continuous(n.breaks = 25)
+	# facet_wrap(~ Region)
+```
+
+
+```{r countries-inequality-facet-line, fig.width=20, fig.height=20}
+data$countries %>%
+	select(Continent, Code, Country, Year, gini) %>%
+	rename(Value = gini) %>%
+	filter(!is.na(Value)) %>%
+	group_by(Year, Continent, Code) %>%
+	summarise(Value = mean(Value)) %>%
+	ggplot(aes(Year, Value, group = Code, colour = Code)) +
+	geom_line() +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Average gini per region (inequality index)", subtitle = "A higher number means more inequality", x = "Year", y = "Gini index value") +
+	facet_wrap(~ Continent, scales = "free") +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.375, 0.375))) +
+	scale_y_continuous(n.breaks = 25)
+```
+
+
+<!-- ```{r fig.width=20, fig.height=20} -->
+<!-- data$countries %>% -->
+<!-- 	select(Region, Code, Country, Year, gini) %>% -->
+<!-- 	rename(Value = gini) %>% -->
+<!-- 	filter(!is.na(Value)) %>% -->
+<!-- 	ggplot(aes(Year, Value, group = Code, colour = Code)) + -->
+<!-- 	geom_line() + -->
+<!-- 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) + -->
+<!-- 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) + -->
+<!-- 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + -->
+<!-- 	labs(title = "Gini (inequality index)", subtitle = "A higher number means more inequality", x = "Year", y = "Gini index value") + -->
+<!-- 	facet_wrap(~ Region, scales = "free") + -->
+<!-- 	# theme(axis.line = element_line()) + -->
+<!-- 	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.15, 0.15))) + -->
+<!-- 	scale_y_continuous(limits = c(15, 85), n.breaks = 25) -->
+
+<!-- data$countries %>% -->
+<!-- 	select(Region, Code, Country, Year, gini) %>% -->
+<!-- 	rename(Value = gini) %>% -->
+<!-- 	filter(!is.na(Value)) %>% -->
+<!-- 	ggplot(aes(Year, Value, group = Code, colour = Code)) + -->
+<!-- 	geom_line() + -->
+<!-- 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) + -->
+<!-- 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) + -->
+<!-- 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + -->
+<!-- 	labs(title = "Gini (inequality index)", subtitle = "A higher number means more inequality", x = "Year", y = "Gini index value") + -->
+<!-- 	facet_wrap(~ Region, scales = "free") + -->
+<!-- 	# theme(axis.line = element_line()) + -->
+<!-- 	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.15, 0.15))) + -->
+<!-- 	scale_y_continuous(trans = "log10", n.breaks = 25) -->
+<!-- ``` -->
+
+
+## u5pop
+
+Total number of children, aged 0 to 4 years old
+
+u5pop	measure	http://gapm.io/du5pop	v1	January 31 2020	Under-five population	Number of under five years children	Under-five population	Total number of children, aged 0 to 4 years old.	people	population
+
+```{r countries-u5pop-line, fig.width=20, fig.height=20}
+data$countries %>%
+	select(Continent, Code, Year, u5pop) %>%
+	rename(Value = u5pop) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Code)) +
+	geom_line() +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
+	theme(legend.position = "none") +
+	scale_y_continuous(n.breaks = 15, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(x)
+	}) +
+	scale_x_continuous(n.breaks = 20,  expand = expansion(mult = c(0.2, 0.2))) +
+	facet_wrap(~ Continent, scales = "free") +
+	labs(title = "Total number of children 0 - 5 yrs", x = "Year", y = "Number")
+
+data$countries %>%
+	select(Continent, Code, Year, u5pop) %>%
+	rename(Value = u5pop) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, colour = Code)) +
+	geom_line() +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
+	theme(legend.position = "none") +
+	scale_y_continuous(trans = "log2", n.breaks = 15, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(x)
+	}) +
+	scale_x_continuous(n.breaks = 20,  expand = expansion(mult = c(0.2, 0.2))) +
+	facet_wrap(~ Continent, scales = "free") +
+	labs(title = "Total number of children 0 - 5 yrs", x = "Year", y = "Number")
+```
+
+
+
+### u5pop/population
+
+```{r}
+data$countries %>%
+	select(Continent, Code, Year, u5pop, population) %>%
+	# rename(Value = u5pop) %>%
+	filter(!is.na(u5pop)) %>%
+	mutate(Value = ((u5pop / population) * 100))
+```
+

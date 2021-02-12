@@ -1,0 +1,92 @@
+---
+title: "Clean data"
+author: "Dereck de Mézquita"
+date: "2/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Libraries
+
+```{r warning=FALSE, message=FALSE}
+library("tidyverse")
+library("vroom")
+```
+
+# Load data
+
+```{r message=FALSE, warning=FALSE}
+data <- lapply(list.files("./data/ddf--gapminder--fasttrack/", pattern = "\\.csv$", full.names = TRUE, all.files = TRUE), vroom, delim = ",")
+
+unique(unlist(lapply(data, colnames)))
+
+names(data) <- list.files("./data/ddf--gapminder--fasttrack/", pattern = "\\.csv$", all.files = TRUE) %>%
+	gsub("ddf--entities--", "", .) %>%
+	gsub("/|-|--|\\.csv", "_", .) %>%
+	gsub("_$", "", .)
+```
+
+subsets of data
+
+- country
+- global
+- world_4region
+
+common 
+
+- time
+
+```{r}
+lapply(data, function(x) {
+	if(any("global" %in% colnames(x))) {x}
+})
+```
+
+
+```{r}
+unique(unlist(lapply(data, colnames)))
+
+countries <- lapply(data, function(x) {
+	ifelse(any("country" %in% colnames(x)), map <- TRUE, map <- FALSE)
+	return(map)
+})
+
+global <- lapply(data, function(x) {
+	ifelse(any("global" %in% colnames(x)), map <- TRUE, map <- FALSE)
+	return(map)
+})
+
+world_4region <- lapply(data, function(x) {
+	ifelse(any("world_4region" %in% colnames(x)), map <- TRUE, map <- FALSE)
+	return(map)
+})
+
+data <- list(
+	countries = data[unlist(unname(countries))],
+	global = data[unlist(unname(global))],
+	world_4region = data[unlist(unname(world_4region))]
+)
+```
+
+
+```{r}
+data <- lapply(data, function(x) {
+  Reduce(function(...) {
+    merge(..., all = TRUE)
+  }, x)
+})
+```
+
+
+```{r}
+saveRDS(data, "./outputs/clean_data.Rds")
+
+# Save list of dataframes as individual csv
+sapply(names(data), function(x) {
+   write.csv(data[[x]], glue::glue("./outputs/clean_data_{x}.csv"), row.names = FALSE)
+})
+```
+

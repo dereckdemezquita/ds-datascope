@@ -34,13 +34,36 @@ options(dplyr.summarise.inform = FALSE)
 # theme_set(theme(legend.position = "none"))
 library("plotly")
 library("countrycode")
-
-# library("trelliscopejs")
 ```
 
 ```{r modules, warning=FALSE, message=FALSE}
 source("./modules/helper-functions.R")
 ```
+
+# ggplot theme
+
+```{r}
+theme_dereck <- function (base_size = 11, base_family = "") {
+	theme_bw() %+replace% theme(
+		plot.title = ggplot2::element_text(face = "bold", hjust = 1), # 0.5 centres when position is set to "plot"
+		plot.subtitle = ggplot2::element_text(hjust = 1, vjust = 0.015, margin = margin(0, 0, 5, 0, unit = "pt")), 
+		
+		panel.background = ggplot2::element_blank(),
+		# panel.border = ggplot2::element_rect(color = "#afafaf", fill = NA),
+		axis.line = ggplot2::element_blank(),
+		panel.border = ggplot2::element_blank(),
+
+		panel.grid.minor = ggplot2::element_line(color = "#676767", size = 0.075, linetype = "dotted"),
+		panel.grid.major = ggplot2::element_line(color = "#cccccc", size = 0.15, linetype = "longdash"),
+
+		# axis.line = ggplot2::element_line(color = "#afafaf"),
+	   axis.ticks = ggplot2::element_line(color = "#cccccc")
+	)
+}
+
+theme_set(theme_dereck())
+```
+
 
 # Load data
 
@@ -70,25 +93,25 @@ The datasets collected and cleaned are of the following dimensions (rows, column
 
 ```{r preview-data-pop, results="asis"}
 cat("### ","Dataset preview: pop", "\n")
-datatable(rbind(head(data$pop, 100), tail(data$pop, 100)))
+datatable(rbind(head(data$pop, 50), tail(data$pop, 50)))
 cat("\n\n")
 ```
 
 ```{r preview-data-countries, results="asis"}
 cat("### ","Dataset preview: countries", "\n")
-datatable(rbind(head(data$countries, 100), tail(data$countries, 100)))
+datatable(rbind(head(data$countries, 50), tail(data$countries, 50)))
 cat("\n\n")
 ```
 
 ```{r preview-data-global, results="asis"}
 cat("### ","Dataset preview: global", "\n")
-datatable(rbind(head(data$global, 100), tail(data$global, 100)))
+datatable(rbind(head(data$global, 50), tail(data$global, 50)))
 cat("\n\n")
 ```
 
 ```{r preview-data-world_4region, results="asis"}
 cat("### ","Dataset preview: world_4region", "\n")
-datatable(rbind(head(data$world_4region, 100), tail(data$world_4region, 100)))
+datatable(rbind(head(data$world_4region, 50), tail(data$world_4region, 50)))
 cat("\n\n")
 ```
 
@@ -213,7 +236,7 @@ data$pop <- data$pop %>%
 	mutate(region7 = factor(region7, levels = region7_factors), region23 = factor(region23, levels = region23_factors))
 ```
 
-```{r pop-line-world, fig.width=20, fig.height=20}
+```{r pop-line-world, fig.width=15, fig.height=15}
 data$pop %>%
 	ggplot(aes(year, population, group = country, colour = code)) +
 	geom_line() +
@@ -261,7 +284,7 @@ data$pop %>%
 ```
 
 
-```{r pop-line-per-regions-sums}
+```{r pop-line-per-regions-sums, fig.width=10, fig.height=10}
 data$pop %>%
 	group_by(year, region7) %>%
 	summarise(region_sum = sum(population)) %>%

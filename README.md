@@ -11,10 +11,11 @@ I wanted to analyse the gapminder datasets. I did this is a few parts.
 # Example visualisations
 
 <p align="center">
-    <img src="./reports/exploratory-analysis/exploratory-analysis_files/figure-html/barplot-completion-word_4region-1.png" width="1000">
+    <img src="./reports/exploratory-analysis/exploratory-analysis_files/figure-html/countries-u5pop-prc-1.png" width="1000">
+    <img src="./reports/exploratory-analysis/exploratory-analysis_files/figure-html/barplot-completion-world_4region-1.png" width="1000">
     <img src="./reports/exploratory-analysis/exploratory-analysis_files/figure-html/countries-inequality-line-1.png" width="1000">
     <img src="./reports/exploratory-analysis/exploratory-analysis_files/figure-html/pop-line-per-regions-sums-1.png" width="1000">
-    <img src="./reports/exploratory-analysis/exploratory-analysis_files/figure-html/unnamed-chunk-11-1.png" width="1000">
+    <img src="./reports/exploratory-analysis/exploratory-analysis_files/figure-html/pop-line-world-2.png" width="1000">
     <img src="./reports/exploratory-analysis/exploratory-analysis_files/figure-html/w4-women-held-line-1.png" width="1000">
     <img src="./reports/exploratory-analysis/exploratory-analysis_files/figure-html/w4-conflict-death-log-line-1.png" width="1000">
 </p>

@@ -1,4 +1,4 @@
-"global","time","emigrant_n","emigrant_pc","immigrant_n","immigrant_pc","journakilled","ndisasd_noep_rate","ndisasd_noep_tot","ndisasd_rate","ndisasd_tot","num_countries_fhos","percit_1_5m","percit_300_500k","percit_5_10m","percit_500k_1m","percit_less_300k","percit_more_10m","popcit_1_5m","popcit_300_500k","popcit_5_10m","popcit_500k_1m","popcit_less_300k","popcit_more_10m","refugee_in_perc_wb","wn_bothhouses_c"
+"Region","Year","emigrant_n","emigrant_pc","immigrant_n","immigrant_pc","journakilled","ndisasd_noep_rate","ndisasd_noep_tot","ndisasd_rate","ndisasd_tot","num_countries_fhos","percit_1_5m","percit_300_500k","percit_5_10m","percit_500k_1m","percit_less_300k","percit_more_10m","popcit_1_5m","popcit_300_500k","popcit_5_10m","popcit_500k_1m","popcit_less_300k","popcit_more_10m","refugee_in_perc_wb","wn_bothhouses_c"
 "world",1900,NA,NA,NA,NA,NA,770.46,1267470,770.47,1267500,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 "world",1901,NA,NA,NA,NA,NA,0.01,18,120.63,200018,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 "world",1902,NA,NA,NA,NA,NA,28.97,48438,28.97,48438,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA

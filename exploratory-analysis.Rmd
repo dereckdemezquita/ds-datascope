@@ -23,7 +23,7 @@ editor_options:
 <a download="exploratory-analysis.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, dpi = 200, fig.width = 8, fig.height = 8, fig.align = "center")
+knitr::opts_chunk$set(echo = TRUE, dpi = 500, fig.width = 10, fig.height = 10, fig.align = "center")
 ```
 
 # Libraries
@@ -32,8 +32,8 @@ knitr::opts_chunk$set(echo = TRUE, dpi = 200, fig.width = 8, fig.height = 8, fig
 library("tidyverse")
 options(dplyr.summarise.inform = FALSE)
 # theme_set(theme(legend.position = "none"))
-library("plotly")
 library("countrycode")
+library("scales")
 ```
 
 ```{r modules, warning=FALSE, message=FALSE}
@@ -45,33 +45,32 @@ source("./modules/helper-functions.R")
 ```{r ggplot-theme}
 theme_dereck <- function (base_size = 11, base_family = "") {
 	theme_bw() %+replace% theme(
-		plot.title = ggplot2::element_text(face = "bold", hjust = 1), # 0.5 centres when position is set to "plot"
-		plot.subtitle = ggplot2::element_text(hjust = 1, vjust = 0.015, margin = margin(0, 0, 5, 0, unit = "pt")), 
+		plot.title = ggplot2::element_text(face = "bold", hjust = 1, margin = margin(0, 0, 5, 0, unit = "pt")), # 0.5 centres when position is set to "plot"
+		plot.subtitle = ggplot2::element_text(hjust = 1, vjust = 0.015, margin = margin(0, 0, 5, 0, unit = "pt")),
 		
 		panel.background = ggplot2::element_blank(),
 		# panel.border = ggplot2::element_rect(color = "#afafaf", fill = NA),
 		axis.line = ggplot2::element_blank(),
 		panel.border = ggplot2::element_blank(),
-
-		panel.grid.minor = ggplot2::element_line(color = "#676767", size = 0.075, linetype = "dotted"),
-		panel.grid.major = ggplot2::element_line(color = "#cccccc", size = 0.15, linetype = "longdash"),
-
+		
+		panel.grid.minor = ggplot2::element_line(color = "#454545", size = 0.135, linetype = "dotted"),
+		panel.grid.major = ggplot2::element_line(color = "#aaaaaa", size = 0.175, linetype = "longdash"),
+		
 		# axis.line = ggplot2::element_line(color = "#afafaf"),
-	   axis.ticks = ggplot2::element_line(color = "#cccccc")
+		axis.ticks = ggplot2::element_line(color = "#aaaaaa"),
+		
+		strip.background = element_rect(fill = "white", colour = "#676767")
 	)
 }
 
 theme_set(theme_dereck())
 ```
 
-
 # Load data
 
 ```{r load-data}
 data <- readRDS("./outputs/clean_data.Rds")
 meta <- read.csv("./data/ddf--gapminder--fasttrack/meta-data/ddf--concepts.csv")
-
-data$pop <- read.csv("./data/population_total.csv")
 ```
 
 # Dataset completeness
@@ -93,7 +92,7 @@ The datasets collected and cleaned are of the following dimensions (rows, column
 
 ```{r preview-data-pop, results="asis"}
 cat("### ","Dataset preview: pop", "\n")
-datatable(rbind(head(data$pop, 50), tail(data$pop, 50)))
+datatable(rbind(head(data$manual, 50), tail(data$manual, 50)))
 cat("\n\n")
 ```
 
@@ -117,13 +116,13 @@ cat("\n\n")
 
 ## Plots {.tabset}
 
-```{r barplot-completion-pop, fig.height=15, results="asis"}
+```{r barplot-completion-pop, results="asis"}
 cat("### ","Dataset completion: pop", "\n")
-{data$pop %>%
-		select(-country) %>%
+{data$manual %>%
+		select(-Year, -Country, -Code, -region7, -region23, -eu15, -region7eu) %>%
 		is.not.na() %>%
 		as.data.frame() %>%
-		colSums() / 195 * 100} %>%
+		colSums() / 58695 * 100} %>%
 	as.list() %>%
 	data.frame() %>%
 	t() %>%
@@ -144,7 +143,7 @@ cat("\n\n")
 ```{r barplot-completion-countries, fig.height=15, results="asis"}
 cat("### ","Dataset completion: countries", "\n")
 {data$countries %>%
-		select(-country, -time) %>%
+		select(-Country, -Year, -region7, -region7eu, -region23, -eu15) %>%
 		is.not.na() %>%
 		as.data.frame() %>%
 		colSums() / 58369 * 100} %>%
@@ -168,7 +167,7 @@ cat("\n\n")
 ```{r barplot-completion-global, results="asis"}
 cat("### ","Dataset completion: global", "\n")
 {data$global %>%
-		select(-global, -time) %>%
+		select(-Region, -Year) %>%
 		is.not.na() %>% 
 		as.data.frame() %>%
 		colSums() / 124 * 100} %>%
@@ -191,7 +190,7 @@ cat("\n\n")
 ```{r barplot-completion-world_4region, results="asis"}
 cat("### ","Dataset completion: world_4region", "\n")
 {data$world_4region %>%
-		select(-world_4region, -time) %>%
+		select(-Region, -Year) %>%
 		is.not.na() %>%
 		as.data.frame() %>%
 		colSums() / 301 * 100} %>%
@@ -211,134 +210,309 @@ cat("### ","Dataset completion: world_4region", "\n")
 cat("\n\n")
 ```
 
-# Total world population
 
-## Renaming variables
+# manual
 
-```{r vector-factors-region}
-region23_factors <- c("Northern America", "South America", "Central America", "Caribbean", "Northern Europe", "Western Europe", "Southern Europe", "Eastern Europe", "Australia and New Zealand", "Western Asia", "Central Asia", "Eastern Asia", "Southern Asia", "South-Eastern Asia", "Melanesia", "Micronesia", "Polynesia", "Northern Africa", "Western Africa", "Eastern Africa", "Middle Africa", "Southern Africa")
-
-region7_factors <- c("North America", "Europe & Central Asia", "Latin America & Caribbean", "East Asia & Pacific", "South Asia", "Middle East & North Africa", "Sub-Saharan Africa")
-```
-
-```{r reshape-pop-data}
-data$pop <- data$pop %>%
-	column_to_rownames("country") %>%
-	t() %>% as.data.frame() %>%
-	rownames_to_column("year") %>%
-	mutate(year = gsub("X", "", year)) %>%
-	reshape2::melt() %>%
-	dplyr::rename(country = variable, population = value) %>%
-	mutate(year = as.numeric(year),
-			 code = countrycode::countrycode(country, "country.name", "iso3c"),
-			 region7 = countrycode::countrycode(country, "country.name", "region"),
-			 region23 = countrycode::countrycode(country, "country.name", "region23")) %>%
-	mutate(region7 = factor(region7, levels = region7_factors), region23 = factor(region23, levels = region23_factors))
-```
+## pop_total
 
 ```{r pop-line-world}
-data$pop %>%
-	ggplot(aes(year, population, group = country, colour = code)) +
-	geom_line() +
+data$manual %>%
+	rename(Population = pop_total) %>%
+	select(Year, Country, Code, region7eu, region23, Population) %>%
+	ggplot(aes(Year, Population, group = Code, colour = Code)) +
+	geom_line(alpha = 0.5, size = 0.65) +
 	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
-	directlabels::geom_dl(aes(label = code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
-	directlabels::geom_dl(aes(label = code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-	labs(title = "World population per region", subtitle = "Red dotted line: projected", caption = "*Note changing scales", x = "Year", y = "Population") +
-	facet_wrap(~ region7, scales = "fixed") +
-	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.1, 0.1))) +
+	labs(title = "World population per country per region", subtitle = "Red dotted line: projected", x = "Year", y = "Population") +
+	facet_wrap(~ region7eu, scales = "free") +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.15, 0.15))) +
 	scale_y_continuous(n.breaks = 10, labels = function(x) {
 		# paste0(substr(format(x, scientific = FALSE), 1, 2), " B")
 		scales::label_number_si(accuracy = 0.1)(x)
-	})
+	}) +
+	theme(panel.grid.minor = element_blank())
 
-data$pop %>%
-	ggplot(aes(year, population, group = country, colour = code)) +
-	geom_line() +
+data$manual %>%
+	rename(Population = pop_total) %>%
+	select(Year, Country, Code, region7eu, region23, Population) %>%
+	ggplot(aes(Year, Population, group = Code, colour = Code)) +
+	geom_line(alpha = 0.5, size = 0.65) +
 	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
-	directlabels::geom_dl(aes(label = code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
-	directlabels::geom_dl(aes(label = code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-	labs(title = "World population per region", subtitle = "Red dotted line: projected", x = "Year", y = "Population log2") +
+	labs(title = "World population per country per region", subtitle = "Red dotted line: projected", x = "Year", y = "Population log2") +
 	# lemon::facet_rep_wrap(~ region7, scales = "fixed", repeat.tick.labels = TRUE) +
-	facet_wrap(~ region7, scales = "fixed") +
-	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.1, 0.1))) +
+	facet_wrap(~ region7eu, scales = "free") +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.15, 0.15))) +
 	scale_y_continuous(trans = "log2", n.breaks = 10, labels = function(x) {
 		# paste0(substr(format(x, scientific = FALSE), 1, 2), " B")
 		scales::label_number_si(accuracy = 0.1)(x)
-	})
-```
+	}) +
+	theme(panel.grid.minor = element_blank())
 
-```{r pop-line-world-int, warning=FALSE}
-{data$pop %>%
-	ggplot(aes(year, population, group = country, colour = code)) +
-	geom_line() +
+data$manual %>%
+	rename(Population = pop_total) %>%
+	select(Year, Country, Code, region7eu, region23, Population) %>%
+	ggplot(aes(Year, Population, group = Code, colour = region7eu)) +
+	geom_line(alpha = 0.65, size = 0.65) +
 	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
+	theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	guides(colour = guide_legend(override.aes = list(alpha = 0.75))) + # make alpha coloured legend darker
+	labs(title = "World population per country; coloured per region", subtitle = "Red dotted line: projected\n", x = "Year", y = "Population log2") +
+	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.1, 0.1))) +
 	scale_y_continuous(trans = "log2", n.breaks = 10, labels = function(x) {
 		scales::label_number_si(accuracy = 0.1)(x)
-	}) +
-	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + # legend.position = "none",
-	labs(title = "World population per region", subtitle = "Red dotted line: projected", x = "Year", y = "Population log2") +
-	lemon::facet_rep_wrap(~ region7, scales = "fixed", repeat.tick.labels = TRUE)} %>%
-	plotly::ggplotly()
+	})
 ```
-
 
 ```{r pop-line-per-regions-sums}
-data$pop %>%
-	group_by(year, region7) %>%
-	summarise(region_sum = sum(population)) %>%
-	ggplot(aes(year, region_sum, colour = region7)) +
+data$manual %>%
+	rename(Population = pop_total) %>%
+	group_by(Year, region7eu) %>%
+	summarise(region_sum = sum(Population)) %>%
+	ggplot(aes(Year, region_sum, colour = region7eu)) +
 	geom_line() +
 	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-	directlabels::geom_dl(aes(label = region7), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
-	directlabels::geom_dl(aes(label = region7), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
-	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.275, 0.275))) +
-	scale_y_continuous(n.breaks = 10, labels = function(x) {
+	directlabels::geom_dl(aes(label = region7eu), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.75)) +
+	directlabels::geom_dl(aes(label = region7eu), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.75)) +
+	scale_x_continuous(n.breaks = 17, expand = expansion(mult = c(0.275, 0.275))) +
+	scale_y_continuous(n.breaks = 17, labels = function(x) {
 		# paste0(substr(format(x, scientific = FALSE), 1, 2), " B")
 		scales::label_number_si(accuracy = 0.1)(x)
 	}) +
 	labs(title = "World population per region", subtitle = "Red dotted line: projected", x = "Year", y = "Population")
 
-data$pop %>%
-	group_by(year, region23) %>%
-	summarise(region_sum = sum(population)) %>%
-	ggplot(aes(year, region_sum, colour = region23)) +
+data$manual %>%
+	rename(Population = pop_total) %>%
+	group_by(Year, region23) %>%
+	summarise(region_sum = sum(Population)) %>%
+	ggplot(aes(Year, region_sum, colour = region23)) +
 	geom_line() +
 	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-	directlabels::geom_dl(aes(label = region23), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
-	directlabels::geom_dl(aes(label = region23), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
-	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.275, 0.275))) +
-	scale_y_continuous(n.breaks = 10, labels = function(x) {
+	directlabels::geom_dl(aes(label = region23), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.75)) +
+	directlabels::geom_dl(aes(label = region23), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.75)) +
+	scale_x_continuous(n.breaks = 17, expand = expansion(mult = c(0.275, 0.275))) +
+	scale_y_continuous(n.breaks = 17, labels = function(x) {
 		# paste0(substr(format(x, scientific = FALSE), 1, 2), " B")
 		scales::label_number_si(accuracy = 0.1)(x)
 	}) +
 	labs(title = "World population per region", subtitle = "Red dotted line: projected", x = "Year", y = "Population")
 ```
 
-```{r pop-line-per-total-sums}
-p <- data$pop %>%
-	group_by(year) %>%
-	summarise(population = sum(population)) %>%
-	mutate(colour = ifelse(year <= 2020, "#444444", "red"),
-			 type = ifelse(year <= 2020, "solid", "dashed")) %>%
-	ggplot(aes(year, population, colour = colour, linetype = type)) +
+```{r pop-line-per-total-sums-int}
+data$manual %>%
+	rename(Population = pop_total) %>%
+	group_by(Year) %>%
+	summarise(Population = sum(Population)) %>%
+	mutate(colour = ifelse(Year <= 2020, "#444444", "red"),
+			 type = ifelse(Year <= 2020, "solid", "dashed")) %>%
+	ggplot(aes(Year, Population, colour = colour, linetype = type)) +
 	geom_line() +
 	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
 	scale_color_identity() +
 	scale_linetype_identity() +
-	scale_y_continuous(n.breaks = 10, labels = function(x) {
+	scale_x_continuous(n.breaks = 25) +
+	scale_y_continuous(n.breaks = 30, labels = function(x) {
 		scales::label_number_si(accuracy = 0.1)(x)
 	}) +
 	labs(title = "World population", subtitle = "Red dotted line: projected", x = "Year", y = "Population (Billions)") +
-	theme(legend.position = "none")
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), panel.grid.minor = element_blank())
 
-p
-
-ggplotly(p)
+data$manual %>%
+	rename(Population = pop_total) %>%
+	group_by(Year) %>%
+	summarise(Population = sum(Population)) %>%
+	mutate(colour = ifelse(Year <= 2020, "#444444", "red"),
+			 type = ifelse(Year <= 2020, "solid", "dashed")) %>%
+	ggplot(aes(Year, log2(Population), colour = colour, linetype = type)) +
+	geom_line() +
+	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
+	scale_color_identity() +
+	scale_linetype_identity() +
+	scale_x_continuous(n.breaks = 25) +
+	scale_y_continuous(n.breaks = 25, labels = function(x) { # calculate log2 scale labels manually; set aes(log2(data))
+		scales::label_number_si(accuracy = 0.1)(2 ^ x) # more n.breaks when using log2 scale
+	}) +
+	labs(title = "World population", subtitle = "Red dotted line: projected", x = "Year", y = "Population (Billions) log2") +
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), panel.grid.minor = element_blank())
 ```
+
+# gdp
+
+PPP GDP is gross domestic product converted to international dollars using purchasing power parity rates. A PPP dollar has the same purchasing power over GDP as the U.S. dollar has in the United States. Data are in constant 2005 international dollars.
+
+```{r}
+data$manual %>%
+	rename(gdp = tot_gdp_inflation_adj_2005) %>%
+	filter(!is.na(gdp)) %>%
+	ggplot(aes(Year, gdp, group = Code, colour = region7eu)) +
+	geom_line(alpha = 0.65, size = 0.65) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.75)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.75)) +
+	scale_x_continuous(n.breaks = 25, expand = expansion(mult = c(0.1, 0.1))) +
+	scale_y_continuous(n.breaks = 20, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(x)
+	}) +
+	labs(title = "GDP per country", subtitle = "Coloured by region\nConstant 2005 international dollars", x = "Year", y = "Total GDP") +
+	theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	scale_colour_discrete(name = "World region") +
+	guides(color = guide_legend(override.aes = list(alpha = 0.95)))
+
+data$manual %>%
+	rename(gdp = tot_gdp_inflation_adj_2005) %>%
+	filter(!is.na(gdp)) %>%
+	ggplot(aes(Year, log2(gdp), group = Code, colour = region7eu)) +
+	geom_line(alpha = 0.65, size = 0.65) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.75)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.75)) +
+	scale_x_continuous(n.breaks = 30, expand = expansion(mult = c(0.1, 0.1))) +
+	scale_y_continuous(n.breaks = 30, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(2 ^ x)
+	}) +
+	labs(title = "GDP per country", subtitle = "Coloured by region\nConstant 2005 international dollars", x = "Year", y = "Total GDP log2") +
+	theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	scale_colour_discrete(name = "World region") +
+	guides(color = guide_legend(override.aes = list(alpha = 0.95)))
+```
+
+```{r dpi=750}
+data$manual %>%
+	rename(gdp = tot_gdp_inflation_adj_2005) %>%
+	filter(!is.na(gdp)) %>%
+	ggplot(aes(Year, gdp, group = Code, colour = Code)) +
+	geom_line(alpha = 0.65, size = 0.65) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.75)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.75)) +
+	scale_x_continuous(n.breaks = 12, expand = expansion(mult = c(0.2, 0.2))) +
+	scale_y_continuous(n.breaks = 15, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(x)
+	}) +
+	labs(title = "GDP per country", subtitle = "Coloured by region\nConstant 2005 international dollars", x = "Year", y = "Total GDP") +
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	scale_colour_discrete(name = "World region") +
+	guides(color = guide_legend(override.aes = list(alpha = 0.95))) +
+	theme(panel.grid.minor = element_blank()) +
+	facet_wrap(~ region7eu, scales = "free")
+
+data$manual %>%
+	rename(gdp = tot_gdp_inflation_adj_2005) %>%
+	filter(!is.na(gdp)) %>%
+	ggplot(aes(Year, log2(gdp), group = Code, colour = Code)) +
+	geom_line(alpha = 0.65, size = 0.65) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.75)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.75)) +
+	scale_x_continuous(n.breaks = 15, expand = expansion(mult = c(0.2, 0.2))) +
+	scale_y_continuous(n.breaks = 15, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(2 ^ x)
+	}) +
+	labs(title = "GDP per country", subtitle = "Coloured by region\nConstant 2005 international dollars", x = "Year", y = "Total GDP log2") +
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	scale_colour_discrete(name = "World region") +
+	guides(color = guide_legend(override.aes = list(alpha = 0.95))) +
+	theme(panel.grid.minor = element_blank()) +
+	facet_wrap(~ region7eu, scales = "free")
+```
+
+```{r}
+data$manual %>%
+	rename(gdp_cap = gdp_per_capita_inflation_adj_2011) %>%
+	filter(!is.na(gdp_cap)) %>%
+	ggplot(aes(Year, gdp_cap, group = Code, colour = region7eu)) +
+	geom_line(alpha = 0.65, size = 0.65) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.75)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.75)) +
+	scale_x_continuous(n.breaks = 30, expand = expansion(mult = c(0.1, 0.1))) +
+	scale_y_continuous(n.breaks = 30, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(x)
+	}) +
+	labs(title = "GDP/income income per capita per country", subtitle = "Coloured by region\nConstant 2011 international dollars", x = "Year", y = "GDP/income per capita") +
+	theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	scale_colour_discrete(name = "World region") +
+	guides(color = guide_legend(override.aes = list(alpha = 0.95)))
+
+data$manual %>%
+	rename(gdp_cap = gdp_per_capita_inflation_adj_2011) %>%
+	filter(!is.na(gdp_cap)) %>%
+	ggplot(aes(Year, log2(gdp_cap), group = Code, colour = region7eu)) +
+	geom_line(alpha = 0.65, size = 0.65) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.75)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.75)) +
+	scale_x_continuous(n.breaks = 30, expand = expansion(mult = c(0.1, 0.1))) +
+	scale_y_continuous(n.breaks = 30, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(2 ^ x)
+	}) +
+	labs(title = "GDP/income per capita per country", subtitle = "Coloured by region\nConstant 2011 international dollars", x = "Year", y = "GDP/income per capita log2") +
+	theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	scale_colour_discrete(name = "World region") +
+	guides(color = guide_legend(override.aes = list(alpha = 0.95)))
+```
+
+
+```{r}
+data$manual %>%
+	rename(gdp_cap = gdp_per_capita_inflation_adj_2011) %>%
+	filter(!is.na(gdp_cap)) %>%
+	ggplot(aes(Year, gdp_cap, group = Code, colour = Code)) +
+	geom_line(alpha = 0.65, size = 0.65) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
+	scale_x_continuous(n.breaks = 15, expand = expansion(mult = c(0.2, 0.2))) +
+	scale_y_continuous(n.breaks = 15, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(x)
+	}) +
+	labs(title = "GDP/income per capita per region", subtitle = "Coloured by region\nConstant 2011 international dollars", x = "Year", y = "GDP/income per capita") +
+	theme(panel.grid.minor = element_blank(), legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	scale_colour_discrete(name = "World region") +
+	guides(color = guide_legend(override.aes = list(alpha = 0.95))) +
+	facet_wrap(~ region7eu, scales = "free")
+
+data$manual %>%
+	rename(gdp_cap = gdp_per_capita_inflation_adj_2011) %>%
+	filter(!is.na(gdp_cap)) %>%
+	ggplot(aes(Year, log2(gdp_cap), group = Code, colour = Code)) +
+	geom_line(alpha = 0.65, size = 0.65) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
+	scale_x_continuous(n.breaks = 15, expand = expansion(mult = c(0.2, 0.2))) +
+	scale_y_continuous(n.breaks = 15, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(2 ^ x)
+	}) +
+	labs(title = "GDP/income per capita per region", subtitle = "Coloured by region\nConstant 2011 international dollars", x = "Year", y = "GDP/income per capita log2") +
+	theme(panel.grid.minor = element_blank(), legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	scale_colour_discrete(name = "World region") +
+	guides(color = guide_legend(override.aes = list(alpha = 0.95))) +
+	facet_wrap(~ region7eu, scales = "free")
+```
+
+
+## avg_life_expect_yrs
+
+```{r}
+data$manual %>%
+	rename(Value = avg_life_expect_yrs) %>%
+	select(Year, Code, region7eu, region23, Value) %>%
+	filter(!is.na(Value)) %>%
+	ggplot(aes(Year, Value, group = Code, colour = Code)) +
+	geom_line(alpha = 0.65, size = 0.65) +
+	geom_vline(xintercept = 2020, colour = "red", linetype = "dashed") +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5)) +
+	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5)) +
+	scale_x_continuous(n.breaks = 15, expand = expansion(mult = c(0.2, 0.2))) +
+	scale_y_continuous(n.breaks = 15) +
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), panel.grid.minor = element_blank()) +
+	guides(colour =guide_legend(override.aes = list(alpha = 0.95))) +
+	labs(title = "Average life expectancy per country", subtitle = "Coloured by region", x = "Year", y = "Average life expectancy") +
+	facet_wrap(~ region7eu, scales = "free")
+```
+
+
 
 # Exploratory analysis
 
@@ -350,21 +524,13 @@ largeTable(meta, targs = c(3, 7, 9, 12))
 
 # world_4region
 
-## Rename variables
-
-```{r reshape-world_4region}
-data$world_4region <- data$world_4region %>%
-	rename(Region = world_4region, Year = time) %>%
-	mutate(Region = stringr::str_to_title(Region))
-```
-
 ## wn_bothhouses_c
 
 Percentage of parliamentary seats held by women.
 
 wn_bothhouses_c	measure	http://gapm.io/dwparl	v2	December 15 2020	Pecentage of women in parliaments	Pecentage of women in parliaments	Pecentage of women in parliaments	Percentage of national parliamentary seats held by women. Lower and upper houses combined	percent	governance
 
-```{r w4-women-held-line}
+```{r w4-women-held-line, fig.width=10, fig.height=10}
 data$world_4region %>%
 	select(Region, Year, wn_bothhouses_c) %>%
 	rename(Value = wn_bothhouses_c) %>%
@@ -376,19 +542,6 @@ data$world_4region %>%
 	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
 	labs(title = "Percentage of parliamentary seats held by women", x = "Year", y = "Women held parliamentary seats %")
-
-{data$world_4region %>%
-	select(Region, Year, wn_bothhouses_c) %>%
-	rename(Value = wn_bothhouses_c) %>%
-	mutate(Region = stringr::str_to_title(Region)) %>%
-	ggplot(aes(Year, Value, colour = Region)) +
-	geom_line() +
-	scale_x_continuous(n.breaks = 20) +
-	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
-	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-	labs(title = "Percentage of parliamentary seats held by women", x = "Year", y = "Women held parliamentary seats %") +
-	scale_colour_discrete(name = "World region")} %>%
-	ggplotly()
 ```
 
 ## refugee_in_perc_wb
@@ -397,7 +550,7 @@ Share refugees	Refugees as share of population in the country of residence.
 
 refugee_in_perc_wb	measure	http://gapm.io/drefugee_wb	v2	July 27 2020	Share refugees	Refugees as share of population in the country of residence.	Share refugees	This is the share of refugees as a percentage of total population in the country of residence.	percent	refugees
 
-```{r w4-refugee-line}
+```{r w4-refugee-line, fig.width=10, fig.height=10,}
 data$world_4region %>%
 	select(Region, Year, refugee_in_perc_wb) %>%
 	rename(Value = refugee_in_perc_wb) %>%
@@ -411,19 +564,6 @@ data$world_4region %>%
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
 	labs(title = "Percentage of refugees to total population of origin", x = "Year", y = "Refugees to total population of origin %") +
 	scale_colour_discrete(name = "World region") # Customise legend title and variable
-
-{data$world_4region %>%
-	select(Region, Year, refugee_in_perc_wb) %>%
-	rename(Value = refugee_in_perc_wb) %>%
-	filter(!is.na(Value)) %>%
-	ggplot(aes(Year, Value, colour = Region)) +
-	geom_line() +
-	scale_x_continuous(n.breaks = 20) +
-	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
-	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-	labs(title = "Percentage of refugees to total population of origin", x = "Year", y = "Refugees to total population of origin %") +
-	scale_colour_discrete(name = "World region")} %>%
-	ggplotly()
 ```
 
 # ihme_hiv_death
@@ -446,23 +586,9 @@ data$world_4region %>%
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
 	labs(title = "Proportion of HIV/AIDS deaths", x = "Year", y = "Proportion of HIV/AIDS deaths %") +
 	scale_colour_discrete(name = "World region")
-
-{data$world_4region %>%
-	select(Region, Year, ihme_hiv_death) %>%
-	rename(Value = ihme_hiv_death) %>%
-	filter(!is.na(Value)) %>%
-	ggplot(aes(Year, Value, colour = Region)) +
-	geom_line() +
-	scale_x_continuous(n.breaks = 20) +
-	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
-	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-	labs(title = "Proportion of HIV/AIDS deaths", x = "Year", y = "Proportion of HIV/AIDS deaths %") +
-	scale_colour_discrete(name = "World region")} %>%
-	ggplotly()
 ```
 
-
-```{r w4-hiv-deaths-log-line}
+```{r w4-hiv-deaths-log-line, fig.width=10, fig.height=10}
 data$world_4region %>%
 	select(Region, Year, ihme_hiv_death) %>%
 	rename(Value = ihme_hiv_death) %>%
@@ -476,20 +602,8 @@ data$world_4region %>%
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
 	labs(title = "Proportion of HIV/AIDS deaths", x = "Year", y = "Proportion of HIV/AIDS deaths %") +
 	scale_colour_discrete(name = "World region")
-
-{data$world_4region %>%
-	select(Region, Year, ihme_hiv_death) %>%
-	rename(Value = ihme_hiv_death) %>%
-	filter(!is.na(Value)) %>%
-	ggplot(aes(Year, Value, colour = Region)) +
-	geom_line() +
-	scale_x_continuous(n.breaks = 20) +
-	scale_y_continuous(trans = "log2", n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
-	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-	labs(title = "Proportion of HIV/AIDS deaths", x = "Year", y = "Proportion of HIV/AIDS deaths %") +
-	scale_colour_discrete(name = "World region")} %>%
-	ggplotly()
 ```
+
 
 ## ihme_conflict_death
 
@@ -512,19 +626,6 @@ data$world_4region %>%
 	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
 	labs(title = "Proportion of conflict/terrorism deaths", x = "Year", y = "Proportion of conflict/terrorism deaths %") +
 	scale_colour_discrete(name = "World region")
-
-{data$world_4region %>%
-	select(Region, Year, ihme_conflict_death) %>%
-	rename(Value = ihme_conflict_death) %>%
-	filter(!is.na(Value)) %>%
-	ggplot(aes(Year, Value, colour = Region)) +
-	geom_line() +
-	scale_x_continuous(n.breaks = 20) +
-	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
-	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-	labs(title = "Proportion of conflict/terrorism deaths", x = "Year", y = "Proportion of conflict/terrorism deaths %") +
-	scale_colour_discrete(name = "World region")} %>%
-	ggplotly()
 ```
 
 
@@ -542,20 +643,8 @@ data$world_4region %>%
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
 	labs(title = "Proportion of conflict/terrorism deaths", x = "Year", y = "Proportion of conflict/terrorism deaths % (log2)") +
 	scale_colour_discrete(name = "World region")
-
-{data$world_4region %>%
-	select(Region, Year, ihme_conflict_death) %>%
-	rename(Value = ihme_conflict_death) %>%
-	filter(!is.na(Value)) %>%
-	ggplot(aes(Year, Value, colour = Region)) +
-	geom_line() +
-	scale_x_continuous(n.breaks = 20) +
-	scale_y_continuous(trans = "log2", n.breaks = 15, labels = function(x) paste0(round(x, digits = 5), "%")) + # Add percent sign
-	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-	labs(title = "Proportion of conflict/terrorism deaths", x = "Year", y = "Proportion of conflict/terrorism deaths % (log2)") +
-	scale_colour_discrete(name = "World region")} %>%
-	ggplotly()
 ```
+
 
 ## ihme_cardio_death
 
@@ -577,29 +666,9 @@ data$world_4region %>%
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
 	labs(title = "Proportion of cardiovascular disease deaths", x = "Year", y = "Proportion of cardiovascular disease deaths %") +
 	scale_colour_discrete(name = "World region")
-
-{data$world_4region %>%
-	select(Region, Year, ihme_cardio_death) %>%
-	rename(Value = ihme_cardio_death) %>%
-	filter(!is.na(Value)) %>%
-	ggplot(aes(Year, Value, colour = Region)) +
-	geom_line() +
-	scale_x_continuous(n.breaks = 20) +
-	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
-	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-	labs(title = "Proportion of cardiovascular disease deaths", x = "Year", y = "Proportion of cardiovascular disease deaths %") +
-	scale_colour_discrete(name = "World region")} %>%
-	ggplotly()
 ```
 
 # global
-
-## Rename variables
-
-```{r reshape-global}
-data$global <- data$global %>%
-	rename(Region = global, Year = time)
-```
 
 ## ndisasd_tot
 
@@ -680,27 +749,6 @@ data$global %>%
 
 # countries
 
-## Rename variables
-
-```{r reshape-countries}
-data$countries <- data$countries %>%
-	rename(Code = country, Year = time) %>%
-	mutate(Code = toupper(Code)) %>%
-	mutate(Country = countrycode::countrycode(Code, "iso3c", "country.name"),
-			 Region = countrycode::countrycode(Code, "iso3c", "region23"),
-			 Continent = countrycode::countrycode(Code, "iso3c", "region")) %>%
-	mutate(Region = factor(Region, levels = region23_factors)) %>%
-	filter(!is.na(Region))
-```
-
-## Add population data
-
-```{r population-full-join}
-data$countries <- data$pop %>%
-	rename(Code = code, Year = year, Country = country) %>%
-	full_join(data$countries, by = c("Code", "Year", "Country"))
-```
-
 ## gini
 
 Gini shows income inequality in a society. A higher number means more inequality.
@@ -709,17 +757,16 @@ gini	measure	http://gapm.io/ddgini	v3	December 5 2018	Gini	Gini coefficient		Gin
 
 ```{r countries-inequality-line}
 data$countries %>%
-	select(Continent, Year, gini) %>%
+	select(region7eu, Year, gini) %>%
 	rename(Value = gini) %>%
-	filter(!is.na(Value) & Year <= 2020) %>%
-	# filter(Year <= 2020) %>%
-	group_by(Year, Continent) %>%
-	summarise(Value = mean(Value), Continent) %>%
-	ggplot(aes(Year, Value, group = Continent, colour = Continent)) +
+	filter(!is.na(Value) & Year <= 2020, !is.na(region7eu)) %>%
+	group_by(Year, region7eu) %>%
+	summarise(Value = mean(Value), region7eu) %>%
+	ggplot(aes(Year, Value, group = region7eu, colour = region7eu)) +
 	geom_line() +
 	# geom_vline(xintercept = 2020, linetype = "dashed", colour = "red") +
-	directlabels::geom_dl(aes(label = Continent), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
-	directlabels::geom_dl(aes(label = Continent), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = region7eu), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
+	directlabels::geom_dl(aes(label = region7eu), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
 	labs(title = "Average gini per region (inequality index)", subtitle = "A higher number means more inequality", x = "Year", y = "Gini index value") +
 	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.375, 0.375))) +
@@ -730,18 +777,18 @@ data$countries %>%
 
 ```{r countries-inequality-facet-line}
 data$countries %>%
-	select(Continent, Code, Country, Year, gini) %>%
+	select(region7eu, Code, Country, Year, gini) %>%
 	rename(Value = gini) %>%
 	filter(!is.na(Value)) %>%
-	group_by(Year, Continent, Code) %>%
+	group_by(Year, region7eu, Code) %>%
 	summarise(Value = mean(Value)) %>%
 	ggplot(aes(Year, Value, group = Code, colour = Code)) +
 	geom_line() +
 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
-	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), panel.grid.minor = element_blank()) +
 	labs(title = "Average gini per region (inequality index)", subtitle = "A higher number means more inequality", x = "Year", y = "Gini index value") +
-	facet_wrap(~ Continent, scales = "free") +
+	facet_wrap(~ region7eu, scales = "free") +
 	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.375, 0.375))) +
 	scale_y_continuous(n.breaks = 25)
 ```
@@ -788,53 +835,89 @@ u5pop	measure	http://gapm.io/du5pop	v1	January 31 2020	Under-five population	Num
 
 ```{r countries-u5pop-line}
 data$countries %>%
-	select(Continent, Code, Year, u5pop) %>%
+	select(region7eu, Code, Year, u5pop) %>%
 	rename(Value = u5pop) %>%
 	filter(!is.na(Value)) %>%
 	ggplot(aes(Year, Value, colour = Code)) +
 	geom_line() +
 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
-	theme(legend.position = "none") +
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), panel.grid.minor = element_blank()) +
 	scale_y_continuous(n.breaks = 15, labels = function(x) {
 		scales::label_number_si(accuracy = 0.1)(x)
 	}) +
 	scale_x_continuous(n.breaks = 20,  expand = expansion(mult = c(0.2, 0.2))) +
-	facet_wrap(~ Continent, scales = "free") +
+	facet_wrap(~ region7eu, scales = "free") +
 	labs(title = "Total number of children 0 - 5 yrs", x = "Year", y = "Number")
 
 data$countries %>%
-	select(Continent, Code, Year, u5pop) %>%
+	select(region7eu, Code, Year, u5pop) %>%
 	rename(Value = u5pop) %>%
 	filter(!is.na(Value)) %>%
-	ggplot(aes(Year, Value, colour = Code)) +
+	ggplot(aes(Year, log2(Value), colour = Code)) +
 	geom_line() +
 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65)) +
 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65)) +
-	theme(legend.position = "none") +
-	scale_y_continuous(trans = "log2", n.breaks = 15, labels = function(x) {
-		scales::label_number_si(accuracy = 0.1)(x)
+	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), panel.grid.minor = element_blank()) +
+	scale_y_continuous(n.breaks = 15, labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(2 ^ x)
 	}) +
 	scale_x_continuous(n.breaks = 20,  expand = expansion(mult = c(0.2, 0.2))) +
-	facet_wrap(~ Continent, scales = "free") +
+	facet_wrap(~ region7eu, scales = "free") +
 	labs(title = "Total number of children 0 - 5 yrs", x = "Year", y = "Number")
 ```
 
 ### u5pop/population
 
 ```{r countries-u5pop-prc}
-data$countries %>%
-	select(Continent, Code, Year, u5pop, population) %>%
-	filter(!is.na(u5pop)) %>%
-	mutate(Value = ((u5pop / population) * 100)) %>%
+data$countries %>% 
+	select(region7eu, Code, Year, u5pop, pop_total) %>%
+	filter(!is.na(u5pop) & !is.na(pop_total)) %>%
+	mutate(Value = ((u5pop / pop_total) * 100)) %>%
 	filter(!is.na(Value)) %>%
-	ggplot(aes(Year, Value, group = Code, colour = Continent)) +
-	geom_line(alpha = 0.5) +
-	geom_vline(xintercept = 2020, colour = "red", linetype = "dashed")+
+	ggplot(aes(Year, Value, group = Code, colour = region7eu)) +
+	geom_line(alpha = 0.35, size = 0.85) +
+	geom_vline(xintercept = 2020, colour = "red", linetype = "dashed") +
 	scale_x_continuous(n.breaks = 20) +
 	scale_y_continuous(n.breaks = 10, labels = function(x) paste0(x, "%")) + # Add percent sign
 	theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-	guides(color = guide_legend(override.aes = list(alpha = 0.75))) +
+	guides(color = guide_legend(override.aes = list(alpha = 0.75))) + # make alpha coloured legend darker
 	labs(title = "Percentage to country's population of children 0 - 5 yrs", x = "Year", y = "Percent of children under 5 yrs")
 ```
 
+## female_hos
+
+```{r countries-1-fhos}
+data$countries %>%
+	select(region7eu, Code, Year, female_hos) %>%
+	filter(!is.na(female_hos) & Year <= 2019, !is.na(region7eu)) %>%
+	mutate(Value = ifelse(female_hos == "Never had a female head of state", 0, 1)) %>%
+	ggplot(aes(Year, Value, group = region7eu, fill = region7eu)) +
+	geom_bar(stat = "identity") +
+	scale_y_continuous(n.breaks = 15) +
+	scale_x_continuous(n.breaks = 20) +
+	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+	labs(title = "Number of countries that had at least one female head of state per region", x = "Year", y = "Number of countries at least one female head of state")
+```
+
+## wn_bothhouses_c
+
+wn_bothhouses_c	measure	http://gapm.io/dwparl	v2	December 15 2020	Pecentage of women in parliaments	Pecentage of women in parliaments	Pecentage of women in parliaments	Percentage of national parliamentary seats held by women. Lower and upper houses combined	percent	governance
+
+```{r countries-parliament-women-prc}
+data$countries %>%
+	select(region7eu, Code, Year, wn_bothhouses_c) %>%
+	filter(!is.na(wn_bothhouses_c) & Year <= 2020 & !is.na(region7eu)) %>%
+	rename(Value = wn_bothhouses_c) %>%
+	ggplot(aes(Year, Value, group = Code, colour = region7eu)) +
+	geom_line(alpha = 0.45,  size = 0.85)
+```
+
+
+```{r}
+data$countries %>%
+	select(region7eu, Year, Code, female_hos, wn_bothhouses_c) %>%
+	filter(!is.na(female_hos) & !is.na(wn_bothhouses_c)) %>%
+	ggplot(aes(female_hos, wn_bothhouses_c)) +
+	geom_hex()
+```

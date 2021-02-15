@@ -8,9 +8,7 @@ I wanted to analyse the gapminder datasets. I did this is a few parts.
 1. Exploratory analysis.
 1. Final plots and display website; D3.js.
 
-# Example visualisations
-
-
+# Visualisations
 
 <p align="center">
     <img src="./reports/exploratory-analysis/exploratory-analysis_files/figure-html/countries-1-fhos-1.png" width="1000">

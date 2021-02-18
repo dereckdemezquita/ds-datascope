@@ -77,7 +77,7 @@ data <- lapply(data, function(x) {
   Reduce(function(...) {
     merge(..., all = TRUE)
   }, x)
-})
+}); data
 ```
 
 # Manual data
@@ -116,7 +116,6 @@ reshape_manual_data <- function(x) {
 }
 ```
 
-
 ```{r warning=FALSE, message=FALSE}
 data$manual <- Reduce(function(...) {
 	merge(..., all = TRUE)
@@ -135,6 +134,11 @@ region23_factors <- c("Northern America", "South America", "Central America", "C
 region7_factors <- c("North America", "Europe & Central Asia", "Latin America & Caribbean", "East Asia & Pacific", "South Asia", "Middle East & North Africa", "Sub-Saharan Africa")
 
 region7eu_factors <- c("North America", "European Union 2015", "Central Asia", "Latin America & Caribbean", "East Asia & Pacific", "South Asia", "Middle East & North Africa", "Sub-Saharan Africa")
+
+region7geoEU_factors <- c("North America", "Geo-cultural Europe", "Central Asia", "Latin America & Caribbean", "East Asia & Pacific", "South Asia", "Middle East & North Africa", "Sub-Saharan Africa")
+
+geo_europe_df <- data.frame(Country = c("Albania", "Andorra", "Armenia", "Austria", "Azerbaijan", "Belarus", "Belgium", "Bosnia", "Bulgaria", "Croatia", "Cyprus", "Czech", "Czech Republic", "Denmark", "Estonia", "Finland", "France", "Georgia", "Germany", "Greece", "Hungary", "Iceland", "Ireland", "Italy", "Kazakhstan", "Kosovo", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta", "Moldova", "Monaco", "Montenegro", "Netherlands", "North Macedonia", "Norway", "Poland", "Portugal", "Romania", "Russia", "San Marino", "Serbia", "Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland", "Turkey", "Ukraine", "United Kingdom", "Vatican")) %>%
+	mutate(Code = countrycode::countrycode(Country, "country.name", "iso3c"))
 ```
 
 ```{r reshape-pop-data}
@@ -146,12 +150,20 @@ data$manual <- data$manual %>%
 			 region23 = countrycode::countrycode(Country, "country.name", "region23"),
 			 eu15 = countrycode::countrycode(Country, "country.name", "eu28")) %>%
 	mutate(region7eu = ifelse(!is.na(eu15), "European Union 2015", region7)) %>%
-	mutate(region7eu = ifelse(region7eu == "Europe & Central Asia", "Central Asia", region7eu)) %>% 
+	mutate(region7eu = ifelse(region7eu == "Europe & Central Asia", "Central Asia", region7eu)) %>%
+	mutate(region7geoEU = ifelse(Code %in% geo_europe_df$Code, "Geo-cultural Europe", region7eu)) %>%
+	mutate(region7geoEU = ifelse(is.na(region7geoEU), "Central Asia", region7geoEU)) %>%
 	mutate(region7 = factor(region7, levels = region7_factors),
 			 region23 = factor(region23, levels = region23_factors),
-			 region7eu = factor(region7eu, levels = region7eu_factors)) %>% 
-	select(Year, Country, Code, region7, region23, eu15, region7eu, dplyr::everything())
+			 region7eu = factor(region7eu, levels = region7eu_factors),
+			 region7geoEU = factor(region7geoEU, levels = region7geoEU_factors)) %>%
+	select(Year, Country, Code, region7geoEU, region7, region23, eu15, region7eu, dplyr::everything())
 ```
+
+```{r}
+data$manual
+```
+
 
 ```{r dpi=500, fig.width=15, fig.height=15}
 data$manual %>%
@@ -159,7 +171,7 @@ data$manual %>%
 	ggplot(aes(Year, tot_gdp_inflation_adj_2005, group = Code, colour = Code)) +
 	geom_line() +
 	scale_y_continuous(trans = "log2") +
-	facet_wrap(~ region7eu, scales = "free") + 
+	facet_wrap(~ region7geoEU, scales = "free") + 
 	theme(legend.position = "none")
 ```
 
@@ -178,7 +190,7 @@ data$global <- data$global %>%
 ## Rename variables
 
 ```{r reshape-countries, warning=FALSE, message=FALSE}
-data$countries %>%
+data$merged <- data$countries %>%
 	rename(Code = country, Year = time) %>%
 	mutate(Code = toupper(Code)) %>%
 	mutate(Country = countrycode::countrycode(Code, "iso3c", "country.name"),
@@ -187,15 +199,22 @@ data$countries %>%
 			 eu15 = countrycode::countrycode(Country, "country.name", "eu28")) %>% 
 	mutate(region7eu = ifelse(!is.na(eu15), "European Union 2015", region7)) %>% 
 	mutate(region7eu = ifelse(region7eu == "Europe & Central Asia", "Central Asia", region7eu)) %>%
+	mutate(region7geoEU = ifelse(Code %in% geo_europe_df$Code, "Geo-cultural Europe", region7eu)) %>%
+	mutate(region7geoEU = ifelse(is.na(region7geoEU), "Central Asia", region7geoEU)) %>%
 	mutate(region7 = factor(region7, levels = region7_factors),
 			 region23 = factor(region23, levels = region23_factors),
-			 region7eu = factor(region7eu, levels = region7eu_factors)) %>%
-	full_join(select(data$manual, Code, Year, pop_total), by = c("Code", "Year")) %>%
-	select(Year, Code, Country, region7, region23, eu15, region7eu, dplyr::everything())
+			 region7eu = factor(region7eu, levels = region7eu_factors),
+			 region7geoEU = factor(region7geoEU, levels = region7geoEU_factors)) %>%
+	full_join(data$manual) %>%
+	select(Year, Country, Code, region7geoEU, region7, region23, eu15, region7eu, dplyr::everything())
+```
+
+```{r}
+data$merged
 ```
 
 ```{r dpi=500, fig.width=15, fig.height=15}
-data$countries %>%
+data$merged %>%
 	filter(!is.na(gini) & !is.na(region7eu)) %>%
 	ggplot(aes(Year, gini, group = Code, colour = Code)) +
 	geom_line() +

@@ -1,0 +1,10 @@
+html, body {
+  margin: 0 auto;
+  padding: 0 auto;
+  color: antiquewhite; }
+
+body {
+  background: #333333; }
+
+#content {
+  padding: 10px; }

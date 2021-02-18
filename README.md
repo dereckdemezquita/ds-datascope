@@ -8,6 +8,10 @@ I wanted to analyse the gapminder datasets and build a single page website for d
 1. Exploratory analysis and visualisation with `ggplot2`.
 1. Final plots and website; `JavaScript`, `D3.js`.
 
+# Project structure
+
+You can find all preliminary analysis and work done with R in the `R-analysis` directory. In the `website` directory you'll find all work done with `JavaScript` and `D3.js`.
+
 # The dataset: gapminder
 
 The data was taken from the [gapminder website](https://www.gapminder.org) and github repositories: [open-numbers/ddf--gapminder--fasttrack](https://github.com/open-numbers/ddf--gapminder--fasttrack).
@@ -52,28 +56,28 @@ Finally all the data is saved to the `SQLite` database found in the `sql` direct
 # ggplot2 visualisations
 
 <p align="center">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/countries-u5pop-prc-1.png" width="1000">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/avg-life-aggregate-1.png" width="1000">
+    <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/countries-u5pop-prc-1.png" width="1000">
+    <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/avg-life-aggregate-1.png" width="1000">
 </p>
 
 <p align="center">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/countries-1-fhos-1.png" width="400">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/gdp-per-capita-1.png" width="400">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/gdp-per-capita-facet-1.png" width="400">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/gini-inequality-line-aggregate-1.png" width="400">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/gpd-per-country-1.png" width="400">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-per-regions-sums-1.png" width="400">
-    <!-- <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-per-total-sums-1.png" width="400"> -->
-    <!-- <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-world-1.png" width="400"> -->
-    <!-- <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-world-facet-1.png" width="400"> -->
+    <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/countries-1-fhos-1.png" width="400">
+    <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/gdp-per-capita-1.png" width="400">
+    <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/gdp-per-capita-facet-1.png" width="400">
+    <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/gini-inequality-line-aggregate-1.png" width="400">
+    <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/gpd-per-country-1.png" width="400">
+    <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-per-regions-sums-1.png" width="400">
+    <!-- <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-per-total-sums-1.png" width="400"> -->
+    <!-- <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-world-1.png" width="400"> -->
+    <!-- <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-world-facet-1.png" width="400"> -->
 </p>
 
 <p align="center">
-    <img src="./reports/analysis-dataset-world/analysis-dataset-world_files/figure-html/global-journalist-killed-line-1.png" width="400">
-    <img src="./reports/analysis-dataset-world/analysis-dataset-world_files/figure-html/global-ndisaster-tot-bar-1.png" width="400">
-    <img src="./reports/analysis-dataset-world/analysis-dataset-world_files/figure-html/unnamed-chunk-1-1.png" width="400">
-    <img src="./reports/analysis-dataset-world/analysis-dataset-world_files/figure-html/w4-conflict-death-line-2.png" width="400">
-    <img src="./reports/analysis-dataset-world/analysis-dataset-world_files/figure-html/w4-refugee-line-1.png" width="400">
-    <img src="./reports/analysis-dataset-world/analysis-dataset-world_files/figure-html/w4-women-held-line-1.png" width="400">
+    <img src="./R-analysis/reports/analysis-dataset-world/analysis-dataset-world_files/figure-html/global-journalist-killed-line-1.png" width="400">
+    <img src="./R-analysis/reports/analysis-dataset-world/analysis-dataset-world_files/figure-html/global-ndisaster-tot-bar-1.png" width="400">
+    <img src="./R-analysis/reports/analysis-dataset-world/analysis-dataset-world_files/figure-html/unnamed-chunk-1-1.png" width="400">
+    <img src="./R-analysis/reports/analysis-dataset-world/analysis-dataset-world_files/figure-html/w4-conflict-death-line-2.png" width="400">
+    <img src="./R-analysis/reports/analysis-dataset-world/analysis-dataset-world_files/figure-html/w4-refugee-line-1.png" width="400">
+    <img src="./R-analysis/reports/analysis-dataset-world/analysis-dataset-world_files/figure-html/w4-women-held-line-1.png" width="400">
 </p>
 

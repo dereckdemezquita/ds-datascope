@@ -49,7 +49,7 @@ data$manual <- Reduce(function(...) {
 
 Finally all the data is saved to the `SQLite` database found in the `sql` directory. I then use this database with `JavaScript` and `D3.js` to produce the website.
 
-# `ggplot2` visualisations
+# ggplot2 visualisations
 
 <p align="center">
     <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/avg-life-aggregate-1.png" width="400">

@@ -52,17 +52,20 @@ Finally all the data is saved to the `SQLite` database found in the `sql` direct
 # ggplot2 visualisations
 
 <p align="center">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/avg-life-aggregate-1.png" width="400">
+    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/countries-u5pop-prc-1.png" width="1000">
+    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/avg-life-aggregate-1.png" width="1000">
+</p>
+
+<p align="center">
     <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/countries-1-fhos-1.png" width="400">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/countries-u5pop-prc-1.png" width="400">
     <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/gdp-per-capita-1.png" width="400">
     <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/gdp-per-capita-facet-1.png" width="400">
     <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/gini-inequality-line-aggregate-1.png" width="400">
     <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/gpd-per-country-1.png" width="400">
     <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-per-regions-sums-1.png" width="400">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-per-total-sums-1.png" width="400">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-world-1.png" width="400">
-    <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-world-facet-1.png" width="400">
+    <!-- <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-per-total-sums-1.png" width="400"> -->
+    <!-- <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-world-1.png" width="400"> -->
+    <!-- <img src="./reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/pop-line-world-facet-1.png" width="400"> -->
 </p>
 
 <p align="center">

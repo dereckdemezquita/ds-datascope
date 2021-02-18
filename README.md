@@ -16,8 +16,9 @@ Unfortunately the datasets provided are quite messy, it is difficult to obtain t
 
 Reshaping the data into long format was done by the `clean-data.Rmd` script. There I use a list object to read in all data files, name the object and execute a custom algorithm for reshaping the data and passing the file name to a column name:
 
+First the data is read and put into long format. This is held by a list object.
+
 ```r
-# First the data is read and put into long format. This is held by a list object.
 reshape_manual_data <- function(x) {
 	shift_long <- function(x) {
 		x %>%
@@ -36,8 +37,11 @@ reshape_manual_data <- function(x) {
 	}
 	return(shifted)
 }
+```
 
-# This list object is now merged to produce a single dataset, NA are inserted where necessary to keep all rows.
+This list object is now merged to produce a single dataset, NA are inserted where necessary to keep all rows.
+
+```r
 data$manual <- Reduce(function(...) {
 	merge(..., all = TRUE)
 }, reshape_manual_data(data$manual))

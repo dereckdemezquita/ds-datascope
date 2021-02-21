@@ -10,6 +10,7 @@
   "author": "Dereck de Mezquita",
   "license": "ISC",
   "dependencies": {
+    "d3": "^6.5.0",
     "node-sass": "^5.0.0"
   }
 }

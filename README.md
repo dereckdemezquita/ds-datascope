@@ -1,4 +1,4 @@
-# ds-gapminder
+# ds-gapminder <img src="./images/project-logo.png" width="200" align="right">
 
 Visualisation and analysis skills by analysing gapminder datasets. Tech stack includes `R`, `tidyverse`, `ggplot2`, `plotly`, `xml2`, `rvest`; `SQLite`; `JavaScript`, `D3.js`; `HTML`, and `CSS`.
 
@@ -11,6 +11,19 @@ I wanted to analyse the gapminder datasets and build a single page website for d
 # Project structure
 
 You can find all preliminary analysis and work done with R in the `R-analysis` directory. In the `website` directory you'll find all work done with `JavaScript` and `D3.js`.
+
+## Website structure
+
+Tech stack will include and work in the following way:
+
+1. `ExpressJS` framework - for server creation.
+1. `SQL` database - stores and manages data.
+1. `Nginx` as a reverse proxy - avoids exposing server and relays client requests.
+1. `NodeJS` server - runs `SQL` and `ExpressJS` server.
+1. `JavaScript` - used front end and back end.
+1. `SCSS` - use for styling; better than `CSS` for its modularity.
+1. `HTML` - front end code.
+1. `D3.js` - visualisation library.
 
 # The dataset: gapminder
 
@@ -56,6 +69,7 @@ Finally all the data is saved to the `SQLite` database found in the `sql` direct
 # ggplot2 visualisations
 
 <p align="center">
+    <img src="./R-analysis/reports/dataset-choropleths-merged/dataset-choropleths-merged_files/figure-html/chor-2-prc-chng-1.png" width="1000">
     <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/countries-u5pop-prc-1.png" width="1000">
     <img src="./R-analysis/reports/dataset-analysis-merged/dataset-analysis-merged_files/figure-html/avg-life-aggregate-1.png" width="1000">
 </p>

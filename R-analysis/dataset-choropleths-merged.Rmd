@@ -1,0 +1,219 @@
+---
+title: 'Dataset choropleths: merged'
+author: "Dereck de Mézquita"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_file=file.path(dirname(inputFile), "./reports/", "/dataset-choropleths-merged/dataset-choropleths-merged.html")) })
+output:
+  html_document: 
+    fig_caption: yes
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+    # code_folding: hide
+params:
+  rmd: dataset-choropleths-merged.Rmd
+editor_options: 
+  chunk_output_type: inline
+---
+
+<a download="dataset-choropleths-merged.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, dpi = 500, fig.width = 8, fig.height = 8, fig.align = "center")
+```
+
+# Libraries
+
+```{r libraries, warning=FALSE, message=FALSE}
+library("tidyverse")
+library("ddplot")
+
+library("geojsonio")
+library("broom")
+
+library("viridis")
+```
+
+# ggplot theme
+
+```{r set-ggplot-defaults}
+update_geom_defaults("line", list(alpha = 0.65, size = 0.65))
+
+theme_set(theme_dereck())
+```
+
+# Load data
+
+```{r load-data}
+data <- readRDS("./outputs/clean_data.Rds")$merged
+```
+
+## Print data
+
+```{r preview-data}
+data
+```
+
+# Download the .geoJSON
+
+```{bash download-geo-json}
+cd data/mapping-data
+wget https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json
+wget https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json
+```
+
+## Load and preview geoJSON
+
+```{r read-geojson}
+# plot(geojsonio::geojson_read("./data/mapping-data/world-countries.json", what = "sp"))
+spdf <- geojsonio::geojson_read("./data/mapping-data/countries.geo.json", what = "sp")
+
+# plot(spdf)
+```
+
+## Convert to tidy geoJSON
+
+```{r tidy-geojson, warning=FALSE, message=FALSE, fig.height=8, fig.width=10}
+spdf_tdy <- broom::tidy(spdf, region = "id")
+
+spdf_tdy %>%
+	ggplot() +
+	geom_polygon(aes(x = long, y = lat, group = group), fill = "white", colour = "gray") +
+	theme_void() +
+	coord_map()
+```
+
+# Preview data variation
+
+```{r func-is-not-na}
+is.not.na <- function(x) {
+	return(!is.na(x))
+}
+```
+
+```{r completeness, fig.height=15}
+{data %>% 
+		filter(Year == 2015) %>%
+		select(-Year, -Country, -Code, -region7geoEU, -region7, -region7eu, -region23, -eu15) %>% 
+		is.not.na() %>%
+		as.data.frame() %>%
+		colSums() / 214 * 100} %>%
+	as.list() %>%
+	data.frame() %>%
+	t() %>%
+	as.data.frame() %>%
+	rownames_to_column() %>%
+	ggplot(aes(reorder(rowname, V1), V1, fill = V1)) +
+	geom_bar(stat = "identity") +
+	scale_fill_gradient(low = "blue", high = "red", limits = c(0, 100), breaks = c(0, 25, 50, 75, 100))  +
+	geom_text(aes(label = glue::glue("{round(V1)}%")), hjust = -0.35, colour = "black") + # , angle = 90
+	scale_y_continuous(expand = expansion(mult = c(0, .2)), n.breaks = 15) +
+	scale_x_discrete(expand = expansion(mult = c(0.015, 0.015))) +
+	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+	labs(title = "Completeness of variables; year 2015", subtitle = "Percent of non NA values per variable", x = "Percentage completeness", y = "Variable", caption = "By Dereck de Mezquita") +
+	coord_flip()
+```
+
+
+```{r data-cols}
+colnames(data)
+```
+
+ilevels4_wb	string	http://gapm.io/dilevels_wb	v2	September 17 2019	4 income levels	4 income levels (World Bank)		Four country income levels classified by the World Bank based on GNI per capita in US$ (Atlas methodology)
+
+```{r bar-pop-chng-country, fig.height=25, fig.width=10}
+data %>%
+	select(Year, Country, region7geoEU, pop_total) %>%
+	filter(!is.na(pop_total) & Year %in% c(2010, 2020)) %>%
+	group_by(Country) %>%
+	arrange(Year, .by_group = TRUE) %>%
+	mutate(pop_chng = (pop_total / lag(pop_total) - 1) * 100) %>%
+	filter(!is.na(pop_chng)) %>%
+	ggplot(aes(reorder(Country, pop_chng), pop_chng, fill = region7geoEU)) +
+	geom_bar(stat = "identity") +
+	scale_y_continuous(n.breaks = 20, labels = function(x){
+		paste0(x, "%")
+	}) +
+	coord_flip() +
+	theme(panel.grid.minor = element_blank(), legend.title = element_text(vjust = 0.5)) +
+	labs(title = "Population change per country 2010 - 2020", x = "Percent change 2010 - 2020", y = "Country", fill = "Region")
+```
+
+```{r 2015-data-merge-map}
+map_data <- data %>%
+	select(Year, Code, Country, region7geoEU, pop_total) %>%
+	filter(!is.na(pop_total) & Year %in% c(2010, 2020)) %>%
+	group_by(Country) %>%
+	arrange(Year, .by_group = TRUE) %>%
+	mutate(prc_chng = (pop_total / lag(pop_total) - 1) * 100,
+			 tot_chng = (pop_total - lag(pop_total))) %>%
+	filter(!is.na(prc_chng) | !is.na(tot_chng)) %>%
+	full_join(spdf_tdy, by = c("Code" = "id"))
+
+
+map_data$prc_chng[is.na(map_data$prc_chng)] <- 0.001
+map_data$tot_chng[is.na(map_data$tot_chng)] <- 0.001
+map_data$tot_chng[map_data$tot_chng == 0] <- 0.001
+```
+
+```{r bar-prc_chng-dist}
+map_data %>%
+	filter(!is.na(long) | !is.na(lat)) %>%
+	select(Code, prc_chng) %>%
+	distinct() %>%
+	ggplot(aes(reorder(Country, prc_chng), prc_chng)) +
+	geom_bar(stat = "identity") +
+	scale_y_continuous(n.breaks = 15) +
+	coord_flip()
+```
+
+```{r check-min-max}
+min(map_data$prc_chng)
+max(map_data$prc_chng)
+```
+
+```{r chor-1-prc-chng, fig.height=8, fig.width=10}
+map_data %>%
+	ggplot() +
+	geom_polygon(aes(x = long, y = lat, group = group, fill = prc_chng)) +
+	theme_void() +
+	coord_map() +
+	# scale_y_continuous(n.breaks = 40) +
+	scale_fill_gradient(limits = c(-20, 70), breaks = c(-20, -10, 0, 10, 20, 30, 40, 50, 60, 70, 80), labels = function(x) {
+		paste0(x, "%")
+	}) + # low = "blue", high = "yellow", 
+	labs(title = "Percent change in population 2010 - 2020", caption = "By: Dereck de Mezquita", fill = "Change") +
+	theme(legend.position = "right")
+```
+
+```{r chor-2-prc-chng, fig.height=8, fig.width=10}
+map_data %>%
+	ggplot() +
+	geom_polygon(aes(fill = prc_chng, x = long, y = lat, group = group), size = 0, alpha = 0.9) +
+	theme_void() +
+	coord_map() +
+	scale_fill_viridis(n.breaks = 10, guide = guide_legend(keyheight = unit(3, units = "mm"), keywidth = unit(5, units = "mm"), nrow = 5), labels = function(x) {
+		paste0(x, "%")
+	}) + # label.position = "bottom", title.position = "top"
+	labs(title = "Percent change in population 2010 - 2020", caption = "By: Dereck de Mezquita", fill = element_blank()) +
+	theme(plot.title = element_text(size = 15, hjust = 0.01, margin = margin(r = 10, l = 2, b = 0.5, unit = "cm")), plot.caption = element_text(margin = margin(15, 50, unit = "mm")), legend.position = c(0.5, -0.075))
+```
+
+```{r chor-3-prc-chng, fig.height=8, fig.width=10}
+map_data %>%
+	ggplot() +
+	geom_polygon(aes(fill = tot_chng, x = long, y = lat, group = group), size = 0, alpha = 0.9) +
+	theme_void() +
+	coord_map() +
+	scale_fill_viridis(n.breaks = 10, guide = guide_legend(keyheight = unit(3, units = "mm"), keywidth = unit(5, units = "mm"), nrow = 5), labels = function(x) {
+		scales::label_number_si(accuracy = 0.1)(x)
+		# scales::label_number_si(accuracy = 0.1)(x)
+	}) + # label.position = "bottom", title.position = "top"
+	labs(title = "Total change in population 2010 - 2020", caption = "By: Dereck de Mezquita", fill = element_blank()) +
+	theme(plot.title = element_text(size = 15, hjust = 0.01, margin = margin(r = 10, l = 2, b = 0.5, unit = "cm")), plot.caption = element_text(margin = margin(15, 50, unit = "mm")), legend.position = c(0.5, -0.075))
+```
+

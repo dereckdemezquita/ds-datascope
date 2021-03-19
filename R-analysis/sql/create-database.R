@@ -1,5 +1,7 @@
 library("RSQLite")
 
+data <- readRDS("./outputs/clean_data.Rds")
+
 # Create a connection to our new database
 # you can check that the .db file has been created on your working directory
 conn <- dbConnect(RSQLite::SQLite(), "gapminder_database.db")
@@ -11,3 +13,6 @@ dbWriteTable(conn, "global", data$global)
 dbWriteTable(conn, "world_4region", data$world_4region)
 
 dbListTables(conn)
+
+
+

@@ -1,0 +1,236 @@
+---
+title: "Gapminder: cleaning the dataset"
+author: "Dereck de Mézquita"
+date: "2/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Libraries
+
+```{r warning=FALSE, message=FALSE}
+library("tidyverse")
+library("vroom")
+```
+
+# Load data
+
+```{r message=FALSE, warning=FALSE}
+data <- lapply(list.files("./data/gapminder/ddf--gapminder--fasttrack/", pattern = "\\.csv$", full.names = TRUE, all.files = TRUE), vroom, delim = ",")
+
+unique(unlist(lapply(data, colnames)))
+
+names(data) <- list.files("./data/gapminder/ddf--gapminder--fasttrack/", pattern = "\\.csv$", all.files = TRUE) %>%
+	gsub("ddf--entities--", "", .) %>%
+	gsub("/|-|--|\\.csv", "_", .) %>%
+	gsub("_$", "", .)
+```
+
+subsets of data
+
+- country
+- global
+- world_4region
+
+common 
+
+- time
+
+```{r}
+lapply(data, function(x) {
+	if(any("global" %in% colnames(x))) {x}
+})
+```
+
+
+```{r}
+unique(unlist(lapply(data, colnames)))
+
+countries <- lapply(data, function(x) {
+	ifelse(any("country" %in% colnames(x)), map <- TRUE, map <- FALSE)
+	return(map)
+})
+
+global <- lapply(data, function(x) {
+	ifelse(any("global" %in% colnames(x)), map <- TRUE, map <- FALSE)
+	return(map)
+})
+
+world_4region <- lapply(data, function(x) {
+	ifelse(any("world_4region" %in% colnames(x)), map <- TRUE, map <- FALSE)
+	return(map)
+})
+
+data <- list(
+	countries = data[unlist(unname(countries))],
+	global = data[unlist(unname(global))],
+	world_4region = data[unlist(unname(world_4region))]
+)
+```
+
+
+```{r}
+data <- lapply(data, function(x) {
+  Reduce(function(...) {
+    merge(..., all = TRUE)
+  }, x)
+}); data
+```
+
+# Manual data
+
+```{r warning=FALSE, message=FALSE}
+data$manual <- lapply(list.files("./data/gapminder/manual-download", pattern = "\\.csv$", full.names = TRUE, all.files = TRUE), vroom, delim = ",")
+
+unique(unlist(lapply(data$manual, colnames)))
+
+names(data$manual) <- list.files("./data/gapminder/manual-download", pattern = "\\.csv$", all.files = TRUE) %>%
+	gsub("manual-download", "", .) %>%
+	gsub("/|-|--|\\.csv", "_", .) %>%
+	gsub("_$", "", .)
+```
+
+## Short to long data
+
+```{r function-reshape-manual-data}
+reshape_manual_data <- function(x) {
+	shift_long <- function(x) {
+		x %>%
+			column_to_rownames("country") %>%
+			t() %>% as.data.frame() %>%
+			rownames_to_column("year") %>%
+			mutate(year = gsub("X", "", year)) %>%
+			reshape2::melt() %>%
+			return()
+	}
+	
+	shifted <- lapply(x, shift_long)
+	
+	for(i in 1:length(x)) {
+		colnames(shifted[[i]])[3] <- names(x)[i]
+	}
+	return(shifted)
+}
+```
+
+```{r warning=FALSE, message=FALSE}
+data$manual <- Reduce(function(...) {
+	merge(..., all = TRUE)
+}, reshape_manual_data(data$manual))
+```
+
+```{r}
+data$manual
+```
+
+## Renaming variables
+
+```{r vector-factors-region}
+region23_factors <- c("Northern America", "South America", "Central America", "Caribbean", "Northern Europe", "Western Europe", "Southern Europe", "Eastern Europe", "Australia and New Zealand", "Western Asia", "Central Asia", "Eastern Asia", "Southern Asia", "South-Eastern Asia", "Melanesia", "Micronesia", "Polynesia", "Northern Africa", "Western Africa", "Eastern Africa", "Middle Africa", "Southern Africa")
+
+region7_factors <- c("North America", "Europe & Central Asia", "Latin America & Caribbean", "East Asia & Pacific", "South Asia", "Middle East & North Africa", "Sub-Saharan Africa")
+
+region7eu_factors <- c("North America", "European Union 2015", "Central Asia", "Latin America & Caribbean", "East Asia & Pacific", "South Asia", "Middle East & North Africa", "Sub-Saharan Africa")
+
+region7geoEU_factors <- c("North America", "Geo-cultural Europe", "Central Asia", "Latin America & Caribbean", "East Asia & Pacific", "South Asia", "Middle East & North Africa", "Sub-Saharan Africa")
+
+geo_europe_df <- data.frame(Country = c("Albania", "Andorra", "Armenia", "Austria", "Azerbaijan", "Belarus", "Belgium", "Bosnia", "Bulgaria", "Croatia", "Cyprus", "Czech", "Czech Republic", "Denmark", "Estonia", "Finland", "France", "Georgia", "Germany", "Greece", "Hungary", "Iceland", "Ireland", "Italy", "Kazakhstan", "Kosovo", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta", "Moldova", "Monaco", "Montenegro", "Netherlands", "North Macedonia", "Norway", "Poland", "Portugal", "Romania", "Russia", "San Marino", "Serbia", "Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland", "Turkey", "Ukraine", "United Kingdom", "Vatican")) %>%
+	mutate(Code = countrycode::countrycode(Country, "country.name", "iso3c"))
+```
+
+```{r reshape-pop-data}
+data$manual <- data$manual %>%
+	dplyr::rename(Country = variable, Year = year) %>%
+	mutate(Year = as.numeric(Year),
+			 Code = countrycode::countrycode(Country, "country.name", "iso3c"),
+			 region7 = countrycode::countrycode(Country, "country.name", "region"),
+			 region23 = countrycode::countrycode(Country, "country.name", "region23"),
+			 eu15 = countrycode::countrycode(Country, "country.name", "eu28")) %>%
+	mutate(region7eu = ifelse(!is.na(eu15), "European Union 2015", region7)) %>%
+	mutate(region7eu = ifelse(region7eu == "Europe & Central Asia", "Central Asia", region7eu)) %>%
+	mutate(region7geoEU = ifelse(Code %in% geo_europe_df$Code, "Geo-cultural Europe", region7eu)) %>%
+	mutate(region7geoEU = ifelse(is.na(region7geoEU), "Central Asia", region7geoEU)) %>%
+	mutate(region7 = factor(region7, levels = region7_factors),
+			 region23 = factor(region23, levels = region23_factors),
+			 region7eu = factor(region7eu, levels = region7eu_factors),
+			 region7geoEU = factor(region7geoEU, levels = region7geoEU_factors)) %>%
+	select(Year, Country, Code, region7geoEU, region7, region23, eu15, region7eu, dplyr::everything())
+```
+
+```{r}
+data$manual
+```
+
+
+```{r dpi=500, fig.width=15, fig.height=15}
+data$manual %>%
+	filter(!is.na(tot_gdp_inflation_adj_2005)) %>%
+	ggplot(aes(Year, tot_gdp_inflation_adj_2005, group = Code, colour = Code)) +
+	geom_line() +
+	scale_y_continuous(trans = "log2") +
+	facet_wrap(~ region7geoEU, scales = "free") + 
+	theme(legend.position = "none")
+```
+
+
+```{r reshape-world_4region}
+data$world_4region <- data$world_4region %>%
+	rename(Region = world_4region, Year = time) %>%
+	mutate(Region = stringr::str_to_title(Region))
+```
+
+```{r reshape-global}
+data$global <- data$global %>%
+	rename(Region = global, Year = time)
+```
+
+## Rename variables
+
+```{r reshape-countries, warning=FALSE, message=FALSE}
+data$merged <- data$countries %>%
+	rename(Code = country, Year = time) %>%
+	mutate(Code = toupper(Code)) %>%
+	mutate(Country = countrycode::countrycode(Code, "iso3c", "country.name"),
+			 region7 = countrycode::countrycode(Country, "country.name", "region"),
+			 region23 = countrycode::countrycode(Country, "country.name", "region23"),
+			 eu15 = countrycode::countrycode(Country, "country.name", "eu28")) %>% 
+	mutate(region7eu = ifelse(!is.na(eu15), "European Union 2015", region7)) %>% 
+	mutate(region7eu = ifelse(region7eu == "Europe & Central Asia", "Central Asia", region7eu)) %>%
+	mutate(region7geoEU = ifelse(Code %in% geo_europe_df$Code, "Geo-cultural Europe", region7eu)) %>%
+	mutate(region7geoEU = ifelse(is.na(region7geoEU), "Central Asia", region7geoEU)) %>%
+	mutate(region7 = factor(region7, levels = region7_factors),
+			 region23 = factor(region23, levels = region23_factors),
+			 region7eu = factor(region7eu, levels = region7eu_factors),
+			 region7geoEU = factor(region7geoEU, levels = region7geoEU_factors)) %>%
+	full_join(data$manual) %>%
+	select(Year, Country, Code, region7geoEU, region7, region23, eu15, region7eu, dplyr::everything())
+```
+
+```{r}
+data$merged
+```
+
+```{r dpi=500, fig.width=15, fig.height=15}
+data$merged %>%
+	filter(!is.na(gini) & !is.na(region7eu)) %>%
+	ggplot(aes(Year, gini, group = Code, colour = Code)) +
+	geom_line() +
+	scale_y_continuous(trans = "log2") +
+	facet_wrap(~ region7eu, scales = "free") + 
+	theme(legend.position = "none")
+```
+
+# Save data
+
+```{r}
+saveRDS(data, "./outputs/gapminder/clean_data.Rds")
+
+# Save list of dataframes as individual csv
+sapply(names(data), function(x) {
+   write.csv(data[[x]], glue::glue("./outputs/gapminder/clean_data_{x}.csv"), row.names = FALSE)
+})
+```
+

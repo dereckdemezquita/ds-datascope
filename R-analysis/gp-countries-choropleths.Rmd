@@ -71,10 +71,16 @@ else
 fi
 ```
 
+
 ```{bash download-geo-json}
-cd data/mapping-data
-wget https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json
-wget https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json
+if [ -z `ls -A data/mapping-data | grep -v ".DS_Store"` ]; then
+   echo "Empty: downloading files."
+   cd data/mapping-data
+	wget https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json
+	wget https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json
+else
+   echo "Not Empty: not downloading"
+fi
 ```
 
 ## Load and preview geoJSON

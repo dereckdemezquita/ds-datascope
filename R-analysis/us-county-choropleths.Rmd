@@ -268,7 +268,7 @@ max(gdp2019$value[!is.na(gdp2019$value)]); min(gdp2019$value[!is.na(gdp2019$valu
 ```
 
 
-```{r choro-gdp-2019}
+```{r choro-gdp-2019, fig.height=8, fig.width=10}
 usa_gdp %>%
 	ggplot() +
 	geom_polygon(aes(x = long, y = lat, group = group, fill = log10(log10(value))), colour = "black", size = 0.075, alpha = 0.9) +

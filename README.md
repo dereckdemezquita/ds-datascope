@@ -1,4 +1,4 @@
-# ds-geo-social-datascope <img src="./images/project-logo.png" width="200" align="right">
+# ds-geo-social-datascope <img src="./images/project-logo.png" width="175" align="right">
 
 Visualisation and analysis skills by analysing geospatial datasets relating to human life and society. Tech stack includes `R`, `tidyverse`, `ggplot2`, `plotly`, `xml2`, `rvest`; `SQLite`; `JavaScript`, `D3.js`; `HTML`, and `CSS`.
 
@@ -82,6 +82,7 @@ Finally all the data is saved to the `SQLite` database found in the `sql` direct
 
 <p align="center">
     <img src="./R-analysis/reports/gp-countries-choropleths/gp-countries-choropleths_files/figure-html/chor-2-prc-chng-1.png" width="1000">
+    <img src="./R-analysis/reports/us-county-choropleths/us-county-choropleths_files/figure-html/choro-gdp-2019-1.png" width="1000">
     <img src="./R-analysis/reports/gp-countries-analysis/gp-countries-analysis_files/figure-html/countries-u5pop-prc-1.png" width="1000">
     <img src="./R-analysis/reports/gp-countries-analysis/gp-countries-analysis_files/figure-html/avg-life-aggregate-1.png" width="1000">
 </p>

@@ -1,11 +1,7 @@
 ---
-title: "Create logo"
+title: "Project logo"
 author: "Dereck de Mézquita"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-knit: (function(inputFile, encoding) { 
-      rmarkdown::render(inputFile,
-                        encoding=encoding, 
-                        output_file=file.path(dirname(inputFile), "./reports/", "/project-logo/project-logo.html")) })
 output:
   html_document: 
     fig_caption: yes
@@ -14,13 +10,9 @@ output:
     toc: yes
     # toc_float: yes
     # code_folding: hide
-params:
-  rmd: project-logo.Rmd
 editor_options: 
   chunk_output_type: inline
 ---
-
-<a download="project-logo.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, dpi = 500, fig.width = 8, fig.height = 8, fig.align = "center")
@@ -50,26 +42,6 @@ theme_set(theme_dereck())
 
 ```{r load-data}
 data <- readRDS("./outputs/gapminder/clean_data.Rds")
-```
-
-```{r project-logo}
-data$merged %>% 
-	select(region7geoEU, Code, Year, u5pop, pop_total) %>%
-	filter(!is.na(u5pop) & !is.na(pop_total)) %>%
-	mutate(Value = ((u5pop / pop_total) * 100)) %>%
-	filter(!is.na(Value)) %>%
-	ggplot(aes(Year, Value, group = Code, colour = region7geoEU)) +
-	geom_line(alpha = 0.4, size = 0.95) +
-	geom_vline(xintercept = 2020, colour = "red", linetype = "dashed") +
-	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65, alpha = 0.65)) +
-	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65, alpha = 0.65)) +
-	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.1, 0.1))) +
-	scale_y_continuous(n.breaks = 20, labels = function(x) {
-		paste0(x, "%")
-	}) + # Add percent sign
-	guides(color = guide_legend(override.aes = list(alpha = 0.95))) + # make alpha coloured legend darker
-	theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), legend.title = element_text(vjust = 0.5)) +
-	labs(title = "Percentage to country's population of children 0 - 5 yrs", subtitle = "Coloured by region", x = "Year", y = "Percent of children under 5 yrs", colour = "Region", caption = "By Dereck de Mezquita")
 ```
 
 ```{r}

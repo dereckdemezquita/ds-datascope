@@ -2,8 +2,6 @@
 deprecated/
 *.html
 
-*.png*
-
 # WEBSITE IGNORES
 !/website/*.html
 *.css

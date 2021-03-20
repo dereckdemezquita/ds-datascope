@@ -26,9 +26,9 @@ scrape_wars_tables <- function(x) {
 
 ```{r}
 data <- lapply(c("https://en.wikipedia.org/wiki/List_of_wars:_1900–1944",
-						 "https://en.wikipedia.org/wiki/List_of_wars:_1945–1989",
-						 "https://en.wikipedia.org/wiki/List_of_wars:_1990–2002",
-						 "https://en.wikipedia.org/wiki/List_of_wars:_2003–present"), scrape_wars_tables)
+					  "https://en.wikipedia.org/wiki/List_of_wars:_1945–1989",
+					  "https://en.wikipedia.org/wiki/List_of_wars:_1990–2002",
+					  "https://en.wikipedia.org/wiki/List_of_wars:_2003–present"), scrape_wars_tables)
 
 data <- unlist(data, recursive = FALSE)
 
@@ -68,7 +68,7 @@ data <- data %>%
 			 loser = gsub_war_text(loser))
 
 
-write.csv(data, "./outputs/clean_wars_scrape.csv", row.names = FALSE)
+write.csv(data, "./outputs/scrape/clean_wars_scrape.csv", row.names = FALSE)
 ```
 
 # American wars
@@ -91,7 +91,7 @@ data %>%
 	lapply(function(x) {
 		gsub(",|%", "", x)
 	}) %>% as.data.frame() %>%
-	write.csv("./outputs/clean_usa_wars_scrape.csv", row.names = FALSE)
+	write.csv("./outputs/scrape/clean_usa_wars_scrape.csv", row.names = FALSE)
 ```
 
 

@@ -5,7 +5,7 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 knit: (function(inputFile, encoding) { 
       rmarkdown::render(inputFile,
                         encoding=encoding, 
-                        output_file=file.path(dirname(inputFile), "./reports/", "/exploratory-analysis-interactive/exploratory-analysis-interactive.html")) })
+                        output_file=file.path(dirname(inputFile), "./reports/", "/gp-interactive/gp-interactive.html")) })
 output:
   html_document: 
     fig_caption: yes
@@ -15,12 +15,12 @@ output:
     toc_float: yes
     # code_folding: hide
 params:
-  rmd: exploratory-analysis-interactive.Rmd
+  rmd: gp-interactive.Rmd
 editor_options: 
   chunk_output_type: inline
 ---
 
-<a download="exploratory-analysis-interactive.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>
+<a download="gp-interactive.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, dpi = 250, fig.width = 10, fig.height = 10, fig.align = "center")

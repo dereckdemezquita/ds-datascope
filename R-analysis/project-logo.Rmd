@@ -79,8 +79,8 @@ p <- data$merged %>%
 	mutate(Value = ((u5pop / pop_total) * 100)) %>%
 	filter(!is.na(Value)) %>%
 	ggplot(aes(Year, Value, group = Code, colour = region7geoEU)) +
-	geom_line(alpha = 0.65, size = 1.75) +
-	geom_vline(xintercept = 2020, colour = "red", linetype = "dashed", size = 1.75) +
+	geom_line(alpha = 0.65, size = 2.5) +
+	geom_vline(xintercept = 2020, colour = "red", linetype = "dashed", size = 2.5) +
 	# directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.65, alpha = 0.65)) +
 	# directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.65, alpha = 0.65)) +
 	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.1, 0.1))) +

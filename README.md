@@ -1,11 +1,11 @@
-# ds-gapminder <img src="./images/project-logo.png" width="200" align="right">
+# ds-geo-social-datascope <img src="./images/project-logo.png" width="200" align="right">
 
-Visualisation and analysis skills by analysing gapminder datasets. Tech stack includes `R`, `tidyverse`, `ggplot2`, `plotly`, `xml2`, `rvest`; `SQLite`; `JavaScript`, `D3.js`; `HTML`, and `CSS`.
+Visualisation and analysis skills by analysing geospatial datasets relating to human life and society. Tech stack includes `R`, `tidyverse`, `ggplot2`, `plotly`, `xml2`, `rvest`; `SQLite`; `JavaScript`, `D3.js`; `HTML`, and `CSS`.
 
-I wanted to analyse the gapminder datasets and build a single page website for displaying some beautiful graphics using `D3.js`. I did this is a few parts:
+The ultimate goal is to analyse the multiple datasets from various sources and build a single page website for displaying some beautiful graphics using `D3.js`. I did this is a few parts:
 
 1. Cleaning, organising and merging the datasets.
-1. Exploratory analysis and visualisation with `ggplot2`.
+1. Exploratory analysis and visualisations with `ggplot2`.
 1. Final plots and website; `JavaScript`, `D3.js`.
 
 # Project structure
@@ -25,7 +25,20 @@ Tech stack will include and work in the following way:
 1. `HTML` - front end code.
 1. `D3.js` - visualisation library.
 
-# The dataset: gapminder
+# Preprocessing datasets
+
+Preprocessing these datasets was a rather tedious matter. Unfortunately these do not always come in a neat and ready to use format. Preprocessing includes, merging, removing trash data, reformating, and manipulating data to fit the `tidy` structure - note that these often are presented in **multiple** `.csv` files. Reading these in all at once and working from a list is essential:
+
+```r
+fontes <- lapply(list.files("./data/united-states-of-america/per-county-votes-20-fontes/", full.names = TRUE), read.csv)
+names(fontes) <- gsub(".csv", "", list.files("./data/united-states-of-america/per-county-votes-20-fontes/"), perl = TRUE)
+```
+
+The trick is to list the files and pass this to the `read.csv` function through `lapply` then name the objects in the list.
+
+Some of the aforementioned preprocessing techniques are demonstrated in the following example. For more information consult the preprocessing scripts.
+
+## Gapminder
 
 The data was taken from the [gapminder website](https://www.gapminder.org) and github repositories: [open-numbers/ddf--gapminder--fasttrack](https://github.com/open-numbers/ddf--gapminder--fasttrack).
 
@@ -38,13 +51,12 @@ First the data is read and put into long format. This is held by a list object.
 ```r
 reshape_manual_data <- function(x) {
 	shift_long <- function(x) {
-		x %>%
-			column_to_rownames("country") %>%
-			t() %>% as.data.frame() %>%
-			rownames_to_column("year") %>%
-			mutate(year = gsub("X", "", year)) %>%
-			reshape2::melt() %>%
-			return()
+        column_to_rownames(x, "country") %>%
+        t() %>% as.data.frame() %>%
+        rownames_to_column("year") %>%
+        mutate(year = gsub("X", "", year)) %>%
+        reshape2::melt() %>%
+        return()
 	}
 	
 	shifted <- lapply(x, shift_long)
@@ -95,3 +107,24 @@ Finally all the data is saved to the `SQLite` database found in the `sql` direct
     <img src="./R-analysis/reports/gp-regions-analysis/gp-regions-analysis_files/figure-html/w4-women-held-line-1.png" width="400">
 </p>
 
+# Data sources
+
+## gapminder
+
+- Downloaded tables from their website: https://www.gapminder.org/data/
+- https://github.com/open-numbers/ddf--gapminder--fasttrack
+
+## US census data
+
+- GDP per county: https://apps.bea.gov/iTable/iTable.cfm?reqid=70&step=1&acrdn=5
+- Census data: https://www.census.gov/data/tables/time-series/demo/popest/2010s-counties-total.html#par_textimage
+   - https://www.census.gov/data/tables/time-series/demo/popest/2010s-counties-total.html
+   - https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2010-2019/co-est2019-alldata.pdf
+- Economic Research Service United States Department of Agriculture
+    - Includes Unemployment, Education, PovertyEstimates: https://www.ers.usda.gov/data-products/county-level-data-sets/download-data/
+
+## Vote datasets
+- https://www.kaggle.com/unanimad/us-election-2020
+- https://projects.fivethirtyeight.com/2020-election-forecast/
+- https://simonrogers.net/2016/11/16/us-election-2016-how-to-download-county-level-results-data/
+	- https://github.com/tonmcg/US_County_Level_Election_Results_08-20

@@ -276,7 +276,7 @@ usa_gdp %>%
 	coord_map() +
 	scale_fill_viridis(n.breaks = 10, guide = guide_legend(keyheight = unit(3, units = "mm"), name = "log10(log10(x))", keywidth = unit(5, units = "mm"), nrow = 5), labels = function(x) {
 	  # format(x, big.mark = ",", scientific = FALSE)
-	  scales::label_number_si(accuracy = 0.1)(x)
+	  scales::label_number_si(accuracy = 0.1)(10 ^ (10 ^ x))
 		# paste0(x, "%")
 	}) + # label.position = "bottom", title.position = "top"
 	labs(title = "GDP per county 2019", subtitle = "", caption = "By Dereck de Mezquita", fill = element_blank()) +

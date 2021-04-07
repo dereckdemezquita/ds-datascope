@@ -117,14 +117,15 @@ Finally all the data is saved to the `SQLite` database found in the `sql` direct
 
 ## US census data
 
-- GDP per county: https://apps.bea.gov/iTable/iTable.cfm?reqid=70&step=1&acrdn=5
-- Census data: https://www.census.gov/data/tables/time-series/demo/popest/2010s-counties-total.html#par_textimage
+- [bea.gov: GDP per county](https://apps.bea.gov/iTable/iTable.cfm?reqid=70&step=1&acrdn=5)
+- [Census data](https://www.census.gov/data/tables/time-series/demo/popest/2010s-counties-total.html#par_textimage)
    - https://www.census.gov/data/tables/time-series/demo/popest/2010s-counties-total.html
    - https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2010-2019/co-est2019-alldata.pdf
-- Economic Research Service United States Department of Agriculture
-    - Includes Unemployment, Education, PovertyEstimates: https://www.ers.usda.gov/data-products/county-level-data-sets/download-data/
+   - https://www.census.gov/data/tables/time-series/demo/popest/2010s-counties-detail.html
+- [ERS Department of Agriculture: Includes Unemployment, Education, PovertyEstimates](https://www.ers.usda.gov/data-products/county-level-data-sets/download-data/)
 
 ## Vote datasets
+
 - https://www.kaggle.com/unanimad/us-election-2020
 - https://projects.fivethirtyeight.com/2020-election-forecast/
 - https://simonrogers.net/2016/11/16/us-election-2016-how-to-download-county-level-results-data/

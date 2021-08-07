@@ -23,7 +23,7 @@ editor_options:
 <a download="gp-countries-analysis.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, dpi = 500, fig.width = 8, fig.height = 8, fig.align = "center")
+knitr::opts_chunk$set(echo = TRUE, dpi = 300, fig.width = 10, fig.height = 10, fig.align = "center")
 ```
 
 # Libraries
@@ -48,6 +48,7 @@ source("./modules/helper-functions.R")
 update_geom_defaults("line", list(alpha = 0.65, size = 0.65))
 
 theme_set(theme_dereck())
+theme_update(panel.grid.minor = element_blank())
 ```
 
 # Load data
@@ -205,8 +206,8 @@ data$merged %>%
 	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5, alpha = 0.75)) +
 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5, alpha = 0.75)) +
-	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.175, 0.175))) +
-	scale_y_continuous(n.breaks = 20, labels = function(x) {
+	scale_x_continuous(n.breaks = 15, expand = expansion(mult = c(0.175, 0.175))) +
+	scale_y_continuous(n.breaks = 15, labels = function(x) {
 		scales::label_number_si(accuracy = 0.1)(x)
 	}) +
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), panel.grid.minor = element_blank()) +
@@ -222,8 +223,8 @@ data$merged %>%
 	geom_vline(xintercept = 2020, linetype = "dotted", colour = "red") +
 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.5, alpha = 0.75)) +
 	directlabels::geom_dl(aes(label = Code), method = list(directlabels::dl.trans(x = x - 0.2), "first.points", cex = 0.5, alpha = 0.75)) +
-	scale_x_continuous(n.breaks = 20, expand = expansion(mult = c(0.175, 0.175))) +
-	scale_y_continuous(n.breaks = 20, labels = function(x) {
+	scale_x_continuous(n.breaks = 15, expand = expansion(mult = c(0.175, 0.175))) +
+	scale_y_continuous(n.breaks = 15, labels = function(x) {
 		scales::label_number_si(accuracy = 0.1)(2 ^ x)
 	}) +
 	theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), panel.grid.minor = element_blank()) +

@@ -1,18 +1,13 @@
-# dev
-dev/
-deprecated/
+# build
+Datascope_files
 
-# build files
-*.html
-_site
-
-# R files
-.Rproj.user/
-
+# R
+.Rproj.user
 .Rhistory
 .RData
+_book
+_bookdown_files
+rsconnect
 
 # machine
 .DS_Store
-
-/.quarto/
